@@ -80,11 +80,11 @@ module.exports = async (req, res) => {
       FROM users
       WHERE id = ${userId}
     `;
-    if (userResult.rows.length === 0) {
+    if (userResult.length === 0) {
       res.status(401).json({ error: 'User not found' });
       return;
     }
-    const user = userResult.rows[0];
+    const user = userResult[0];
 
     // --- Decide whether to sync ---
     const now = Date.now();
@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
       const existingResult = await sql`
         SELECT date FROM daily_steps WHERE user_id = ${user.id} ORDER BY date DESC LIMIT 1
       `;
-      const hasExistingData = existingResult.rows.length > 0;
+      const hasExistingData = existingResult.length > 0;
 
       let startDate;
       if (!hasExistingData) {
@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
         startDate = daysAgoDateStr(HISTORICAL_DAYS);
       } else {
         // Incremental sync: fetch from the most recent synced date
-        startDate = existingResult.rows[0].date;
+        startDate = existingResult[0].date;
       }
       const endDate = todayStr();
 
@@ -135,7 +135,7 @@ module.exports = async (req, res) => {
       WHERE user_id = ${user.id}
       ORDER BY date ASC
     `;
-    const allSteps = stepsResult.rows.map((row) => ({
+    const allSteps = stepsResult.map((row) => ({
       date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date).slice(0, 10),
       steps: row.steps,
       goal_met: row.goal_met,
@@ -168,7 +168,7 @@ module.exports = async (req, res) => {
     const syncedAtResult = await sql`
       SELECT last_synced_at FROM users WHERE id = ${user.id}
     `;
-    const lastSyncedAt = syncedAtResult.rows[0]?.last_synced_at ?? null;
+    const lastSyncedAt = syncedAtResult[0]?.last_synced_at ?? null;
 
     // --- Build response ---
     res.status(200).json({

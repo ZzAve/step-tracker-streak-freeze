@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
       RETURNING id
     `;
 
-    const userId = result.rows[0].id;
+    const userId = result[0].id;
 
     // Initialise streak row for new users (no-op for existing)
     await sql`
