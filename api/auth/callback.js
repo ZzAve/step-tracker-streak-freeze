@@ -9,26 +9,12 @@
  * 5. Sets a session cookie and redirects to /.
  */
 
-const crypto = require('crypto');
-const OAuth = require('oauth-1.0a');
 const { sql, initializeDatabase } = require('../../lib/db');
 const { createSessionCookie, unsign } = require('../../lib/session');
+const { getOAuthClient } = require('../../lib/oauth');
 
 const ACCESS_TOKEN_URL = 'https://connectapi.garmin.com/oauth-service/oauth/access_token';
 const COOKIE_NAME = 'oauth_request_token';
-
-function getOAuthClient() {
-  return new OAuth({
-    consumer: {
-      key: process.env.GARMIN_CONSUMER_KEY,
-      secret: process.env.GARMIN_CONSUMER_SECRET,
-    },
-    signature_method: 'HMAC-SHA1',
-    hash_function(base_string, key) {
-      return crypto.createHmac('sha1', key).update(base_string).digest('base64');
-    },
-  });
-}
 
 /**
  * Parse a cookie header string into a plain object.
@@ -52,6 +38,9 @@ function clearRequestTokenCookie() {
 }
 
 module.exports = async (req, res) => {
+  // Set Content-Type for all HTML error responses in this handler
+  res.setHeader('Content-Type', 'text/html');
+
   // Always clear the temporary cookie regardless of outcome
   const clearCookie = clearRequestTokenCookie();
 
@@ -138,8 +127,8 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Garmin's access token is unique per user and serves as the user identifier
-    const garminUserId = accessToken;
+    // Garmin returns a userId in the access token response; fall back to accessToken if absent
+    const garminUserId = accessParams.get('userId') || accessToken;
 
     // Ensure DB is initialised (idempotent)
     await initializeDatabase();

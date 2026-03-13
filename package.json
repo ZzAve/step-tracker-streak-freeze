@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "vercel build",
-    "deploy": "vercel deploy"
+    "deploy": "vercel deploy",
+    "test": "node --test lib/streak.test.js"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",

@@ -60,6 +60,10 @@ async function upsertSteps(userId, stepRecords) {
 }
 
 module.exports = async (req, res) => {
+  if (req.method !== 'GET') {
+    res.status(405).setHeader('Allow', 'GET').end();
+    return;
+  }
   try {
     await initializeDatabase();
 

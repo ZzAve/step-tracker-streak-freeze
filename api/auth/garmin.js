@@ -7,26 +7,12 @@
  * 3. Redirects the user to Garmin's authorization page.
  */
 
-const crypto = require('crypto');
-const OAuth = require('oauth-1.0a');
 const { sign } = require('../../lib/session');
+const { getOAuthClient } = require('../../lib/oauth');
 
 const REQUEST_TOKEN_URL = 'https://connectapi.garmin.com/oauth-service/oauth/request_token';
 const AUTHORIZE_URL = 'https://connect.garmin.com/oauthConfirm';
 const COOKIE_NAME = 'oauth_request_token';
-
-function getOAuthClient() {
-  return new OAuth({
-    consumer: {
-      key: process.env.GARMIN_CONSUMER_KEY,
-      secret: process.env.GARMIN_CONSUMER_SECRET,
-    },
-    signature_method: 'HMAC-SHA1',
-    hash_function(base_string, key) {
-      return crypto.createHmac('sha1', key).update(base_string).digest('base64');
-    },
-  });
-}
 
 function requestTokenCookieFlags() {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
