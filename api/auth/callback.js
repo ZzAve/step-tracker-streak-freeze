@@ -132,28 +132,14 @@ module.exports = async (req, res) => {
     const accessToken = accessParams.get('oauth_token');
     const accessTokenSecret = accessParams.get('oauth_token_secret');
 
-    // Garmin returns the user ID in the access token response
-    const garminUserId =
-      accessParams.get('oauth_token_secret') !== null
-        ? accessParams.get('oauth_token')  // fallback placeholder
-        : null;
-
-    // The actual Garmin user ID field name varies; common key is "oauth_token_attributes" or embedded.
-    // Try known keys; fall back to the token itself as a unique identifier.
-    const garminId =
-      accessParams.get('oauth_token') ||
-      accessParams.get('userId') ||
-      accessParams.get('user_id');
-
     if (!accessToken || !accessTokenSecret) {
       res.setHeader('Set-Cookie', clearCookie);
       res.status(502).send('Invalid access token response from Garmin. <a href="/api/auth/garmin">Try again</a>');
       return;
     }
 
-    // The display user ID Garmin embeds is typically `oauth_token` itself (unique per user).
-    // If Garmin provides a dedicated field, prefer it.
-    const finalGarminUserId = accessParams.get('oauth_token_attributes') || accessToken;
+    // Garmin's access token is unique per user and serves as the user identifier
+    const garminUserId = accessToken;
 
     // Ensure DB is initialised (idempotent)
     await initializeDatabase();
@@ -161,7 +147,7 @@ module.exports = async (req, res) => {
     // Upsert user — store access token and secret server-side only
     const result = await sql`
       INSERT INTO users (garmin_user_id, oauth_token, oauth_token_secret)
-      VALUES (${finalGarminUserId}, ${accessToken}, ${accessTokenSecret})
+      VALUES (${garminUserId}, ${accessToken}, ${accessTokenSecret})
       ON CONFLICT (garmin_user_id)
       DO UPDATE SET
         oauth_token        = EXCLUDED.oauth_token,
@@ -182,8 +168,7 @@ module.exports = async (req, res) => {
     const sessionCookie = createSessionCookie(userId);
     res.setHeader('Set-Cookie', [sessionCookie, clearCookie]);
 
-    res.writeHead(302, { Location: '/' });
-    res.end();
+    res.redirect(302, '/');
   } catch (err) {
     console.error('Error in /api/auth/callback:', err);
     res.setHeader('Set-Cookie', clearCookie);
