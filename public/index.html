@@ -1,12 +1,659 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step Tracker Streak Freeze</title>
+  <title>Stappen Streak</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-alt: #22263a;
+      --border: #2e3250;
+      --text: #e8eaf6;
+      --text-muted: #7b82b0;
+      --accent: #5c6bc0;
+      --accent-hover: #7986cb;
+      --green: #4caf7d;
+      --green-bg: #1a3329;
+      --red: #ef5350;
+      --red-bg: #331919;
+      --blue: #42a5f5;
+      --blue-bg: #0d2233;
+      --gold: #ffc107;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Login screen ─────────────────────────────── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .login-logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .login-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+    }
+
+    .btn-connect {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.85rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-connect:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    /* ── Dashboard ────────────────────────────────── */
+    #dashboard {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .app-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-logout:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    /* ── Cards ─────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Streak card ────────────────────────────────── */
+    .streak-card {
+      text-align: center;
+      padding: 2rem 1.5rem 1.5rem;
+    }
+
+    .streak-number {
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .streak-label {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+
+    .streak-longest {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .streak-longest strong {
+      color: var(--gold);
+    }
+
+    /* ── Freeze card ────────────────────────────────── */
+    .freeze-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .snowflake-icon {
+      font-size: 1.4rem;
+      opacity: 0.3;
+      transition: opacity 0.2s;
+    }
+
+    .snowflake-icon.active {
+      opacity: 1;
+    }
+
+    .freeze-count-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--blue);
+      margin-left: 0.25rem;
+    }
+
+    .freeze-progress {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .freeze-progress strong {
+      color: var(--text);
+    }
+
+    .freeze-max {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Week navigation ────────────────────────────── */
+    .week-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .week-nav-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .btn-nav {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background: var(--border);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    /* ── Days grid ──────────────────────────────────── */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+
+    .day-cell {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.25rem;
+      text-align: center;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.3rem;
+    }
+
+    .day-cell.today {
+      border-color: var(--accent);
+    }
+
+    .day-name {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .day-cell.today .day-name {
+      color: var(--accent-hover);
+    }
+
+    .day-steps {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.2;
+    }
+
+    .day-indicator {
+      font-size: 1.2rem;
+      margin-top: auto;
+    }
+
+    .day-cell.goal-met {
+      background: var(--green-bg);
+      border-color: var(--green);
+    }
+
+    .day-cell.goal-missed {
+      background: var(--red-bg);
+      border-color: #5a2020;
+    }
+
+    .day-cell.future {
+      opacity: 0.45;
+    }
+
+    /* ── Sync footer ────────────────────────────────── */
+    .sync-footer {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+    }
+
+    /* ── Loading / Error states ─────────────────────── */
+    .state-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 480px) {
+      .days-grid {
+        gap: 0.3rem;
+      }
+
+      .day-cell {
+        padding: 0.5rem 0.15rem;
+        min-height: 80px;
+      }
+
+      .day-steps {
+        font-size: 0.6rem;
+      }
+
+      .streak-number {
+        font-size: 4rem;
+      }
+    }
+
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
-  <h1>Step Tracker Streak Freeze</h1>
-  <p>Coming soon.</p>
+
+  <!-- Loading -->
+  <div id="loading-screen" class="state-screen">
+    <div class="spinner"></div>
+    <span>Laden…</span>
+  </div>
+
+  <!-- Login -->
+  <div id="login-screen" class="hidden">
+    <div class="login-logo">🏃</div>
+    <h1 class="login-title">Stappen Streak</h1>
+    <p class="login-subtitle">Verbind je Garmin account om je streaks bij te houden.</p>
+    <a href="/api/auth/garmin" class="btn-connect">
+      <span>🔗</span> Verbind met Garmin
+    </a>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <header>
+      <span class="app-title">🏃 Stappen Streak</span>
+      <button class="btn-logout" id="btn-logout">Uitloggen</button>
+    </header>
+
+    <!-- Streak -->
+    <div class="card streak-card">
+      <div class="card-label">Huidige streak</div>
+      <div class="streak-number" id="streak-current">—</div>
+      <div class="streak-label">dagen</div>
+      <div class="streak-longest">Langste streak: <strong id="streak-longest">—</strong> dagen</div>
+    </div>
+
+    <!-- Freezes -->
+    <div class="card">
+      <div class="card-label">Streak freezes</div>
+      <div class="freeze-row">
+        <span class="snowflake-icon" id="flake-1">❄️</span>
+        <span class="snowflake-icon" id="flake-2">❄️</span>
+        <span class="freeze-count-text" id="freeze-count-text">— / 2</span>
+      </div>
+      <div id="freeze-progress-text"></div>
+    </div>
+
+    <!-- Weekly overview -->
+    <div class="card">
+      <div class="card-label">Weekoverzicht</div>
+      <div class="week-nav">
+        <button class="btn-nav" id="btn-prev-week" title="Vorige week">‹</button>
+        <span class="week-nav-title" id="week-label">—</span>
+        <button class="btn-nav" id="btn-next-week" title="Volgende week">›</button>
+      </div>
+      <div class="days-grid" id="days-grid"></div>
+    </div>
+
+    <div class="sync-footer" id="sync-footer"></div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STEP_GOAL = 10000;
+      const DAY_NAMES = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+      const MONTH_NAMES = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+      const MAX_FREEZES = 2;
+
+      let apiData = null;
+      // weekOffset: 0 = current week, -1 = last week, etc.
+      let weekOffset = 0;
+
+      // ── Helpers ────────────────────────────────────────
+
+      function show(id) {
+        document.getElementById(id).classList.remove('hidden');
+      }
+
+      function hide(id) {
+        document.getElementById(id).classList.add('hidden');
+      }
+
+      /** Returns a YYYY-MM-DD string for a Date object. */
+      function toDateStr(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      /**
+       * Returns the Monday of the ISO week that contains `d`,
+       * offset by `weekOffset` weeks.
+       */
+      function getMondayOfWeek(weekOffset) {
+        const now = new Date();
+        // JS getDay(): 0=Sun … 6=Sat. Adjust to Mon=0 … Sun=6.
+        const dow = (now.getDay() + 6) % 7;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - dow + weekOffset * 7);
+        monday.setHours(0, 0, 0, 0);
+        return monday;
+      }
+
+      /** Format a date range label like "10 – 16 mrt 2026" */
+      function weekLabel(monday) {
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+
+        const fromDay = monday.getDate();
+        const toDay = sunday.getDate();
+        const month = MONTH_NAMES[sunday.getMonth()];
+        const year = sunday.getFullYear();
+
+        if (monday.getMonth() === sunday.getMonth()) {
+          return `${fromDay} – ${toDay} ${month} ${year}`;
+        } else {
+          return `${fromDay} ${MONTH_NAMES[monday.getMonth()]} – ${toDay} ${month} ${year}`;
+        }
+      }
+
+      /** Format step count: 11234 → "11.234" */
+      function fmtSteps(n) {
+        return n.toLocaleString('nl-NL');
+      }
+
+      /** Format ISO timestamp to "13 mrt 10:00" */
+      function fmtSynced(iso) {
+        const d = new Date(iso);
+        return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+
+      // ── Render ─────────────────────────────────────────
+
+      function renderDashboard(data) {
+        const { streak, steps, last_synced_at } = data;
+
+        // Streak
+        document.getElementById('streak-current').textContent = streak.current;
+        document.getElementById('streak-longest').textContent = streak.longest;
+
+        // Freezes
+        const fc = streak.freeze_count;
+        document.getElementById('flake-1').classList.toggle('active', fc >= 1);
+        document.getElementById('flake-2').classList.toggle('active', fc >= 2);
+        document.getElementById('freeze-count-text').textContent = `${fc} / ${MAX_FREEZES}`;
+
+        const progressEl = document.getElementById('freeze-progress-text');
+        if (fc >= MAX_FREEZES) {
+          progressEl.innerHTML = `<span class="freeze-max">Maximum bereikt</span>`;
+        } else {
+          const daysLeft = 5 - streak.days_toward_next_freeze;
+          progressEl.innerHTML = `<span class="freeze-progress">Volgende freeze in: <strong>${daysLeft} dag${daysLeft !== 1 ? 'en' : ''}</strong></span>`;
+        }
+
+        // Sync footer
+        if (last_synced_at) {
+          document.getElementById('sync-footer').textContent =
+            `Laatste synchronisatie: ${fmtSynced(last_synced_at)}`;
+        }
+
+        // Weekly view
+        renderWeek(steps);
+      }
+
+      function renderWeek(steps) {
+        const stepsMap = {};
+        steps.forEach(s => { stepsMap[s.date] = s; });
+
+        const monday = getMondayOfWeek(weekOffset);
+        document.getElementById('week-label').textContent = weekLabel(monday);
+
+        // Disable next-week button when on current week
+        document.getElementById('btn-next-week').disabled = weekOffset >= 0;
+
+        const todayStr = toDateStr(new Date());
+        const grid = document.getElementById('days-grid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          const dateStr = toDateStr(d);
+          const entry = stepsMap[dateStr];
+          const isToday = dateStr === todayStr;
+          const isFuture = dateStr > todayStr;
+
+          const cell = document.createElement('div');
+          cell.className = 'day-cell';
+          if (isToday) cell.classList.add('today');
+
+          let indicator = '';
+          let stepsHtml = '';
+
+          if (isFuture) {
+            cell.classList.add('future');
+            indicator = '';
+          } else if (entry) {
+            if (entry.goal_met) {
+              cell.classList.add('goal-met');
+              indicator = '✓';
+              stepsHtml = fmtSteps(entry.steps);
+            } else {
+              cell.classList.add('goal-missed');
+              indicator = '✗';
+              stepsHtml = fmtSteps(entry.steps);
+            }
+          } else {
+            // No data for a past day
+            indicator = '';
+          }
+
+          cell.innerHTML = `
+            <span class="day-name">${DAY_NAMES[i]}</span>
+            <span class="day-steps">${stepsHtml}</span>
+            <span class="day-indicator">${indicator}</span>
+          `;
+
+          grid.appendChild(cell);
+        }
+      }
+
+      // ── Events ─────────────────────────────────────────
+
+      document.getElementById('btn-logout').addEventListener('click', async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } finally {
+          window.location.reload();
+        }
+      });
+
+      document.getElementById('btn-prev-week').addEventListener('click', () => {
+        weekOffset -= 1;
+        if (apiData) renderWeek(apiData.steps);
+      });
+
+      document.getElementById('btn-next-week').addEventListener('click', () => {
+        if (weekOffset >= 0) return;
+        weekOffset += 1;
+        if (apiData) renderWeek(apiData.steps);
+      });
+
+      // ── Init ────────────────────────────────────────────
+
+      async function init() {
+        try {
+          const res = await fetch('/api/steps');
+
+          if (res.status === 401) {
+            hide('loading-screen');
+            show('login-screen');
+            return;
+          }
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          apiData = await res.json();
+          hide('loading-screen');
+          show('dashboard');
+          renderDashboard(apiData);
+
+        } catch (err) {
+          hide('loading-screen');
+          // Show a minimal error state in the login screen area
+          const ls = document.getElementById('login-screen');
+          ls.classList.remove('hidden');
+          ls.innerHTML = `
+            <div class="login-logo">⚠️</div>
+            <h1 class="login-title">Fout bij laden</h1>
+            <p class="login-subtitle">${err.message}</p>
+            <button class="btn-connect" onclick="location.reload()" style="border:none;cursor:pointer;">
+              Opnieuw proberen
+            </button>
+          `;
+        }
+      }
+
+      init();
+    })();
+  </script>
 </body>
 </html>
