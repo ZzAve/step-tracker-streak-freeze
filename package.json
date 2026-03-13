@@ -1,0 +1,18 @@
+{
+  "name": "step-tracker-streak-freeze",
+  "version": "1.0.0",
+  "description": "Vercel webapp to track Garmin steps with a streak freeze mechanic",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel deploy"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "oauth-1.0a": "^2.2.6"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
