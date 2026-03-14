@@ -4,16 +4,17 @@
   "description": "Vercel webapp to track Garmin steps with a streak freeze mechanic",
   "private": true,
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
-    "deploy": "vercel deploy",
     "test": "node --test lib/streak.test.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
-    "oauth-1.0a": "^2.2.6"
+    "garmin-connect": "^1.6.2",
+    "ws": "^8.19.0"
   },
   "engines": {
     "node": ">=18.x"
+  },
+  "devDependencies": {
+    "vercel": "^50.32.5"
   }
 }

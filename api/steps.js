@@ -20,7 +20,7 @@ const { fetchDailySteps } = require('../lib/garmin');
 const { calculateStreak, STEP_GOAL } = require('../lib/streak');
 
 const SYNC_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
-const HISTORICAL_DAYS = 365;
+const HISTORICAL_DAYS = 60;
 
 /**
  * Return a YYYY-MM-DD string for `daysAgo` days before today (UTC).
@@ -29,6 +29,7 @@ const HISTORICAL_DAYS = 365;
  */
 function daysAgoDateStr(daysAgo) {
   const d = new Date();
+  d.setUTCHours(12)
   d.setUTCDate(d.getUTCDate() - daysAgo);
   return d.toISOString().slice(0, 10);
 }
@@ -38,7 +39,9 @@ function daysAgoDateStr(daysAgo) {
  * @returns {string}
  */
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  let d = new Date();
+  d.setUTCHours(12);
+  return d.toISOString().slice(0, 10);
 }
 
 /**
@@ -76,7 +79,7 @@ module.exports = async (req, res) => {
 
     // --- Load user record ---
     const userResult = await sql`
-      SELECT id, oauth_token, oauth_token_secret, last_synced_at
+      SELECT id, garmin_tokens, last_synced_at
       FROM users
       WHERE id = ${userId}
     `;
@@ -92,8 +95,9 @@ module.exports = async (req, res) => {
     const needsSync = now - lastSynced >= SYNC_COOLDOWN_MS;
 
     if (needsSync) {
-      if (!user.oauth_token || !user.oauth_token_secret) {
-        res.status(400).json({ error: 'No Garmin OAuth tokens found for user' });
+      console.log("Syncing steps for user", userId)
+      if (!user.garmin_tokens) {
+        res.status(400).json({ error: 'No Garmin tokens found for user' });
         return;
       }
 
@@ -109,16 +113,27 @@ module.exports = async (req, res) => {
         startDate = daysAgoDateStr(HISTORICAL_DAYS);
       } else {
         // Incremental sync: fetch from the most recent synced date
-        startDate = existingResult[0].date;
+        const dateObj = new Date(existingResult[0].date);
+        dateObj.setUTCDate(dateObj.getUTCDate());
+        startDate = dateObj.toISOString().slice(0, 10);
       }
       const endDate = todayStr();
 
-      const stepRecords = await fetchDailySteps(
-        user.oauth_token,
-        user.oauth_token_secret,
-        startDate,
-        endDate
-      );
+      let stepRecords;
+      console.log(`Updating steps for user with id ${user.id} from`, startDate, "to", endDate)
+      try {
+        stepRecords = await fetchDailySteps(
+          user.garmin_tokens,
+          startDate,
+          endDate
+        );
+      } catch (err) {
+        if (err.message && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+          res.status(401).json({ error: 'Garmin token expired, please log in again' });
+          return;
+        }
+        throw err;
+      }
 
       await upsertSteps(user.id, stepRecords);
 
@@ -135,11 +150,16 @@ module.exports = async (req, res) => {
       WHERE user_id = ${user.id}
       ORDER BY date ASC
     `;
-    const allSteps = stepsResult.map((row) => ({
-      date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date).slice(0, 10),
-      steps: row.steps,
-      goal_met: row.goal_met,
-    }));
+    const allSteps = stepsResult.map((row) => {
+      // console.log("Row", row)
+      return ({
+        date: row.date instanceof Date
+            ? `${row.date.getFullYear()}-${String(row.date.getMonth() + 1).padStart(2, '0')}-${String(row.date.getDate()).padStart(2, '0')}`
+            : String(row.date).slice(0, 10),
+        steps: row.steps,
+        goal_met: row.goal_met,
+      });
+    });
 
     // --- Calculate streak ---
     const streakResult = calculateStreak(allSteps, null);
@@ -177,6 +197,7 @@ module.exports = async (req, res) => {
         longest: streakResult.longest_streak,
         freeze_count: streakResult.freeze_count,
         days_toward_next_freeze: streakResult.days_since_last_freeze_earned,
+        freezes_used: streakResult.freezes_used.map(f => f.date),
       },
       steps: allSteps,
       last_synced_at: lastSyncedAt,
