@@ -99,6 +99,27 @@ GET  /api/steps             → Sync + return steps data en streak info
 POST /api/auth/logout       → Clear session
 ```
 
+### 6. Garmin-connect library behouden, API direct aanroepen voor batch-fetching
+
+**Keuze**: De `garmin-connect` npm library behouden voor authenticatie en token management, maar de Garmin API range-endpoint direct aanroepen via `client.client.get()` voor het ophalen van stappen.
+
+**Waarom**:
+
+De library's `getSteps()` methode haalt slechts één dag per keer op. De onderliggende Garmin API (`/usersummary-service/stats/steps/daily/{from}/{to}`) ondersteunt echter ranges tot 28 dagen per request. Door het endpoint direct aan te roepen met automatische chunking reduceren we 60 API-calls (bij historische import) naar 3.
+
+In-sourcing van de volledige library is onderzocht maar afgewezen. De auth-flow is complex:
+- 5-staps OAuth dance (SSO → CSRF-token scraping → ticket → OAuth1 → OAuth2 exchange)
+- HMAC-SHA1 signing via OAuth 1.0a
+- Automatische OAuth2 token-refresh bij 401 met request-queuing
+- HTML-parsing van Garmin SSO pagina's (fragiel bij Garmin-wijzigingen)
+
+De library-maintainer vangt deze complexiteit en breaking changes op. Onze workaround voor batch-fetching is stabiel omdat het een officieel API-endpoint gebruikt.
+
+**Alternatieven overwogen**:
+- Volledige in-sourcing: te veel fragiele oppervlakte (HTML scraping, OAuth1 signing), weinig winst
+- Fork van de library: onderhoudslast zonder duidelijk voordeel
+- PR naar upstream: mogelijkheid, maar onze workaround werkt nu al
+
 ## Risks / Trade-offs
 
 - **Garmin API toegang** → Garmin developer account vereist goedkeuring. Mitigatie: vroeg aanvragen, eventueel mock-data voor ontwikkeling.
