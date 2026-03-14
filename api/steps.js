@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
 
     // --- Load user record ---
     const userResult = await sql`
-      SELECT id, garmin_tokens, last_synced_at
+      SELECT id, garmin_user_id, garmin_tokens, last_synced_at
       FROM users
       WHERE id = ${userId}
     `;
@@ -192,6 +192,7 @@ module.exports = async (req, res) => {
 
     // --- Build response ---
     res.status(200).json({
+      user_email: user.garmin_user_id || null,
       streak: {
         current: streakResult.current_streak,
         longest: streakResult.longest_streak,

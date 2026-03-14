@@ -392,6 +392,7 @@
       gap: 0.5rem;
       padding-top: 0.75rem;
       border-top: 1px solid var(--border);
+      position: relative;
     }
 
     .shield-icon {
@@ -650,6 +651,193 @@
       .longest-number {
         font-size: 1.5rem;
       }
+
+      .user-email {
+        display: none;
+      }
+    }
+
+    /* ── Help button ──────────────────────────────── */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-header .card-label {
+      margin-bottom: 0;
+    }
+
+    .help-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .help-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ── Help popover ─────────────────────────────── */
+    .help-popover {
+      display: none;
+      position: fixed;
+      width: 280px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(232, 164, 74, 0.08);
+      z-index: 999;
+    }
+
+    .help-popover.open {
+      display: block;
+      animation: fadeInUp 0.2s ease both;
+    }
+
+    .help-popover-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .help-popover-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .help-popover-close:hover {
+      color: var(--text);
+    }
+
+    .help-popover-body {
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ── Logout modal ─────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 320px;
+      width: calc(100% - 2rem);
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      animation: fadeInUp 0.25s ease both;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .btn-modal-cancel {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-modal-cancel:hover {
+      background: var(--border);
+    }
+
+    .btn-modal-danger {
+      background: var(--red);
+      border: none;
+      color: #fff;
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-modal-danger:hover {
+      background: #c0625b;
+      transform: translateY(-1px);
+    }
+
+    /* ── User email in header ─────────────────────── */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .user-email {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .hidden { display: none !important; }
@@ -683,11 +871,17 @@
   <div id="dashboard" class="hidden">
     <header>
       <span class="app-title">🔥 Stappen Streak</span>
-      <button class="btn-logout" id="btn-logout">Uitloggen</button>
+      <div class="header-right">
+        <span class="user-email" id="user-email"></span>
+        <button class="btn-logout" id="btn-logout">Uitloggen</button>
+      </div>
     </header>
 
     <!-- Hero Card -->
     <div class="card hero-card">
+      <div class="card-header" style="justify-content: flex-end; margin-bottom: 0.25rem;">
+        <button class="help-btn" data-help="streak">?</button>
+      </div>
       <div class="hero-top">
         <div class="hero-stat">
           <span class="hero-stat-icon">🔥</span>
@@ -709,6 +903,7 @@
 
       <!-- Freeze section -->
       <div class="freeze-section">
+        <button class="help-btn" data-help="freeze" style="position: absolute; top: 0.75rem; right: 1.5rem;">?</button>
         <span class="shield-icon" id="shield-1">🛡️</span>
         <span class="shield-icon" id="shield-2">🛡️</span>
         <span class="freeze-count-text" id="freeze-count-text">— / 2</span>
@@ -718,7 +913,10 @@
 
     <!-- Weekly overview -->
     <div class="card">
-      <div class="card-label">Weekoverzicht</div>
+      <div class="card-header">
+        <div class="card-label">Weekoverzicht</div>
+        <button class="help-btn" data-help="week">?</button>
+      </div>
       <div class="week-nav">
         <button class="btn-nav" id="btn-prev-week" title="Vorige week">‹</button>
         <span class="week-nav-title" id="week-label">—</span>
@@ -731,7 +929,10 @@
 
     <!-- API Key for Garmin Widget -->
     <div class="card" style="margin-top: 1rem;">
-      <div class="card-label">Garmin Widget</div>
+      <div class="card-header">
+        <div class="card-label">Garmin Widget</div>
+        <button class="help-btn" data-help="widget">?</button>
+      </div>
       <div id="apikey-section" style="font-size: 0.85rem;">
         <div id="apikey-display" style="display: none; word-break: break-all;">
           <span style="color: var(--text-muted);">API Key:</span>
@@ -744,6 +945,18 @@
         <p style="color: var(--text-muted); font-size: 0.7rem; margin-top: 0.5rem;">
           Voer deze key in bij de Garmin Connect IQ widget instellingen.
         </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirmation modal -->
+  <div class="modal-overlay" id="logout-modal">
+    <div class="modal-card">
+      <div class="modal-title">Uitloggen</div>
+      <div class="modal-text">Weet je het zeker?</div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modal-cancel">Annuleren</button>
+        <button class="btn-modal-danger" id="modal-confirm-logout">Uitloggen</button>
       </div>
     </div>
   </div>
@@ -899,7 +1112,12 @@
       // ── Render ─────────────────────────────────────────
 
       function renderDashboard(data) {
-        const { streak, steps, last_synced_at } = data;
+        const { streak, steps, last_synced_at, user_email } = data;
+
+        // User email in header
+        if (user_email) {
+          document.getElementById('user-email').textContent = user_email;
+        }
 
         // Streak count-up animation
         const streakEl = document.getElementById('streak-current');
@@ -999,9 +1217,110 @@
         }
       }
 
-      // ── Events ─────────────────────────────────────────
+      // ── Help popover system ──────────────────────────────
 
-      document.getElementById('btn-logout').addEventListener('click', async () => {
+      const HELP_TEXTS = {
+        streak: {
+          title: 'Streak & Record',
+          body: 'Je streak telt het aantal opeenvolgende dagen waarop je minstens 10.000 stappen hebt gezet. Het record is je langste streak ooit. Haal elke dag je doel om je streak te verlengen!'
+        },
+        freeze: {
+          title: 'Streak Freezes',
+          body: 'Freezes beschermen je streak als je een dag je doel niet haalt. Je kunt maximaal 2 freezes tegelijk hebben. Je verdient een nieuwe freeze na elke 5 opeenvolgende dagen dat je je stappendoel haalt.'
+        },
+        week: {
+          title: 'Weekoverzicht',
+          body: 'Groen (✓) = stappendoel gehaald. Rood (✗) = niet gehaald. Blauw schild (🛡️) = freeze gebruikt, je streak bleef beschermd. Gebruik de pijltjes om eerdere weken te bekijken.'
+        },
+        widget: {
+          title: 'Garmin Widget',
+          body: 'Met de API key kun je de Garmin Connect IQ widget koppelen aan je account. Genereer een key en voer deze in bij de widget-instellingen op je Garmin horloge.'
+        }
+      };
+
+      // Single shared popover element, appended to body (avoids button/overflow clipping)
+      const popoverEl = document.createElement('div');
+      popoverEl.className = 'help-popover';
+      document.body.appendChild(popoverEl);
+
+      let activeHelpBtn = null;
+
+      function closePopover() {
+        popoverEl.classList.remove('open');
+        activeHelpBtn = null;
+      }
+
+      document.querySelectorAll('.help-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const key = btn.dataset.help;
+          const info = HELP_TEXTS[key];
+          if (!info) return;
+
+          // Toggle off if same button clicked again
+          if (activeHelpBtn === btn) {
+            closePopover();
+            return;
+          }
+
+          // Fill content
+          popoverEl.innerHTML = `
+            <div class="help-popover-title">
+              <span>${info.title}</span>
+              <button class="help-popover-close" onclick="event.stopPropagation()">×</button>
+            </div>
+            <div class="help-popover-body">${info.body}</div>
+          `;
+
+          // Wire close button
+          popoverEl.querySelector('.help-popover-close').addEventListener('click', closePopover);
+
+          // Position below the button
+          const rect = btn.getBoundingClientRect();
+          const rightOffset = window.innerWidth - rect.right;
+          popoverEl.style.top = (rect.bottom + 10) + 'px';
+          popoverEl.style.right = rightOffset + 'px';
+          popoverEl.style.left = '';
+
+          // On very small screens, center it instead
+          if (window.innerWidth < 400) {
+            popoverEl.style.right = '1rem';
+            popoverEl.style.left = '1rem';
+            popoverEl.style.width = 'auto';
+          } else {
+            popoverEl.style.width = '280px';
+          }
+
+          popoverEl.classList.add('open');
+          activeHelpBtn = btn;
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.help-popover') && !e.target.closest('.help-btn')) {
+          closePopover();
+        }
+      });
+
+      // ── Logout modal ─────────────────────────────────────
+
+      const logoutModal = document.getElementById('logout-modal');
+
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        logoutModal.classList.add('open');
+      });
+
+      document.getElementById('modal-cancel').addEventListener('click', () => {
+        logoutModal.classList.remove('open');
+      });
+
+      logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+          logoutModal.classList.remove('open');
+        }
+      });
+
+      document.getElementById('modal-confirm-logout').addEventListener('click', async () => {
         try {
           await fetch('/api/auth/logout', { method: 'POST' });
         } finally {
