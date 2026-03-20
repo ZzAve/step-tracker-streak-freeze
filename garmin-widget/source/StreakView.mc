@@ -4,7 +4,6 @@ import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Application.Properties;
 import Toybox.ActivityMonitor;
-import Toybox.System;
 import Toybox.Math;
 
 class StreakView extends WatchUi.View {
@@ -25,13 +24,14 @@ class StreakView extends WatchUi.View {
     // Cached bitmap resources
     var shoeIcon = null;
     var snowflakeIcon = null;
-    var snowflakeSmall = null;
 
     function initialize() {
         View.initialize();
+    }
+
+    function onLayout(dc as Graphics.Dc) as Void {
         shoeIcon = WatchUi.loadResource(Rez.Drawables.ShoeIcon);
         snowflakeIcon = WatchUi.loadResource(Rez.Drawables.SnowflakeIcon);
-        snowflakeSmall = WatchUi.loadResource(Rez.Drawables.SnowflakeIcon);
     }
 
     function onShow() as Void {
@@ -93,7 +93,6 @@ class StreakView extends WatchUi.View {
     function onUpdate(dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
-
         if (showDetail) {
             drawDetailScreen(dc, w, h);
         } else {
@@ -214,7 +213,7 @@ class StreakView extends WatchUi.View {
                     dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
                     drawCheck(dc, posX, rowY, 7);
                 } else if (status.equals("freeze")) {
-                    dc.drawBitmap(posX - 6, rowY - 8, snowflakeSmall);
+                    dc.drawBitmap(posX - 6, rowY - 8, snowflakeIcon);
                 } else {
                     dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
                     dc.drawText(posX, rowY, Graphics.FONT_TINY, dayLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
