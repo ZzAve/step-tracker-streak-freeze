@@ -18,10 +18,3 @@ The system SHALL fetch daily step counts using the garmin-connect package's rang
 #### Scenario: Widget authentication via hashed key
 - **WHEN** the Garmin widget requests step data with an API key
 - **THEN** system validates the key by SHA-256 hashing it, looking up the hash in the api_keys table, checking expiration, and updating last_used_at before returning data
-
-### Requirement: Historical data import on first login
-The system SHALL fetch available historical daily step data on first login to enable immediate streak calculation. The system SHALL fetch the past 60 days using the Garmin range endpoint (in 28-day chunks).
-
-#### Scenario: First login data import
-- **WHEN** user logs in for the first time (no existing step data)
-- **THEN** system fetches daily step counts for the past 60 days and stores them in the database

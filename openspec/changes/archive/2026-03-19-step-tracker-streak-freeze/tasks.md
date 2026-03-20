@@ -2,7 +2,7 @@
 
 - [x] 1.1 Initialize Vercel project with static HTML + serverless functions structure
 - [x] 1.2 Set up Vercel Postgres and create database schema (users, daily_steps, streaks tables)
-- [ ] 1.3 Register Garmin Connect developer application and obtain OAuth consumer key/secret
+- [x] 1.3 Register Garmin Connect developer application and obtain OAuth consumer key/secret
 
 ## 2. Garmin OAuth Integration
 
@@ -35,6 +35,6 @@
 
 ## 6. Deploy & Test
 
-- [ ] 6.1 Configure Vercel environment variables (Garmin OAuth keys, session secret)
-- [ ] 6.2 Deploy to Vercel and test full OAuth flow end-to-end
-- [ ] 6.3 Verify streak calculation with real Garmin data
+- [x] 6.1 Configure Vercel environment variables (Garmin OAuth keys, session secret)
+- [x] 6.2 Deploy to Vercel and test full OAuth flow end-to-end
+- [x] 6.3 Verify streak calculation with real Garmin data

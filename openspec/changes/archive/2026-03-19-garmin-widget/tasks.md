@@ -42,5 +42,5 @@
 
 ## 7. Bouwen en testen
 
-- [ ] 7.1 Bouw widget met Connect IQ SDK en test in simulator
-- [ ] 7.2 Deploy `.prg` bestand naar fysiek Garmin horloge en verifieer werking
+- [x] 7.1 Bouw widget met Connect IQ SDK en test in simulator
+- [x] 7.2 Deploy `.prg` bestand naar fysiek Garmin horloge en verifieer werking
