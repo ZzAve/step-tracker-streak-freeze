@@ -1,0 +1,6 @@
+<drawables>
+    <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+    <bitmap id="ShoeIcon" filename="shoe_icon.png" />
+    <bitmap id="SnowflakeIcon" filename="snowflake.png" />
+<!--    <bitmap id="SnowflakeSmall" filename="snowflake_small.png" />-->
+</drawables>

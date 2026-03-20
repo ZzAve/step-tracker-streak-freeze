@@ -8,6 +8,7 @@ class StreakApp extends Application.AppBase {
     }
 
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        return [new StreakView(), new StreakDelegate()];
+        var view = new StreakView();
+        return [view, new StreakDelegate(view)];
     }
 }

@@ -1,7 +1,11 @@
 import Toybox.Graphics;
+import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Application.Properties;
+import Toybox.ActivityMonitor;
+import Toybox.System;
+import Toybox.Math;
 
 class StreakView extends WatchUi.View {
 
@@ -11,13 +15,23 @@ class StreakView extends WatchUi.View {
     var freezes = null;
     var nextMilestone = null;
     var daysToMilestone = null;
+    var todaySteps = null;
+    var stepGoal = 10000;
+    var week = null;
     var isLoading = false;
     var isOffline = false;
+    var showDetail = false;
 
-    var MILESTONES = [5, 10, 25, 50, 100];
+    // Cached bitmap resources
+    var shoeIcon = null;
+    var snowflakeIcon = null;
+    var snowflakeSmall = null;
 
     function initialize() {
         View.initialize();
+        shoeIcon = WatchUi.loadResource(Rez.Drawables.ShoeIcon);
+        snowflakeIcon = WatchUi.loadResource(Rez.Drawables.SnowflakeIcon);
+        snowflakeSmall = WatchUi.loadResource(Rez.Drawables.SnowflakeIcon);
     }
 
     function onShow() as Void {
@@ -47,29 +61,56 @@ class StreakView extends WatchUi.View {
         );
     }
 
-    function onReceive(responseCode as Number, data as Dictionary or Null) as Void {
-        isLoading = false;
-
+    function onReceive(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or Null) as Void {
         if (responseCode == 200 && data != null) {
             streak = data["streak"];
             longest = data["longest"];
             freezes = data["freezes"];
             nextMilestone = data["next_milestone"];
             daysToMilestone = data["days_to_milestone"];
+            todaySteps = data["today_steps"];
+            if (data["step_goal"] != null) {
+                stepGoal = data["step_goal"];
+            }
+            week = data["week"] as Lang.Dictionary;
             isOffline = false;
         } else {
-            // Keep cached data, mark offline
             isOffline = (streak != null);
         }
 
+        isLoading = false;
         WatchUi.requestUpdate();
     }
 
-    function onUpdate(dc as Dc) as Void {
+    function getLiveSteps() as Lang.Number {
+        var info = ActivityMonitor.getInfo();
+        if (info != null && info.steps != null) {
+            return info.steps;
+        }
+        return 0;
+    }
+
+    function onUpdate(dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
 
-        // Background
+        if (showDetail) {
+            drawDetailScreen(dc, w, h);
+        } else {
+            drawMainScreen(dc, w, h);
+        }
+    }
+
+    // ── Draw checkmark at position ──
+    function drawCheck(dc, cx, cy, size) as Void {
+        dc.setPenWidth(2);
+        dc.drawLine(cx - size, cy, cx - size / 3, cy + size);
+        dc.drawLine(cx - size / 3, cy + size, cx + size, cy - size);
+        dc.setPenWidth(1);
+    }
+
+    // ── Screen 1: Main Glance ──
+    function drawMainScreen(dc, w, h) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
 
@@ -86,88 +127,155 @@ class StreakView extends WatchUi.View {
             return;
         }
 
-        // ── Streak number (top section) ──
-        var streakY = h * 18 / 100;
+        var centerX = w / 2;
+        var centerY = h / 2;
+        var radius = w / 2 - 8; // Nearly full screen, just inside bezel
 
-        // Fire symbol
-        dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, streakY - 5, Graphics.FONT_MEDIUM, "~", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        // ── Shoe icon (top center, bitmap) ──
+        dc.drawBitmap(centerX - 20, centerY - radius + 20, shoeIcon);
 
-        // Streak count — large
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, streakY + 28, Graphics.FONT_NUMBER_HOT, streak.toString(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        // ── Circular arc for today's step progress ──
+        // Native-style: 240° arc with 120° gap at the bottom
+        var arcStart = 90; // 12 o'clock
+        var arcEnd = 90;   // 12 o'clock
+        var arcSpan = 360;  // total degrees of arc
 
-        // "dagen" label
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, streakY + 60, Graphics.FONT_XTINY, "dagen", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        // ── Milestone bar (middle) ──
-        var barY = h * 58 / 100;
-        var barLeft = w * 12 / 100;
-        var barRight = w * 88 / 100;
-        var barWidth = barRight - barLeft;
-
-        // Background line
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(barLeft, barY, barRight, barY);
-
-        // Filled line
-        var maxMs = 100;
-        var currentStreak = streak;
-        if (currentStreak > maxMs) { currentStreak = maxMs; }
-        var fillEnd = barLeft + barWidth * currentStreak / maxMs;
-        dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine(barLeft, barY, fillEnd, barY);
-
-        // Milestone dots
-        for (var i = 0; i < MILESTONES.size(); i++) {
-            var ms = MILESTONES[i];
-            var x = barLeft + barWidth * ms / maxMs;
-            var achieved = (streak >= ms);
-
-            if (achieved) {
-                dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-                dc.fillCircle(x, barY, 5);
-            } else {
-                dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-                dc.drawCircle(x, barY, 5);
-            }
-
-            // Label below
-            dc.setColor(achieved ? Graphics.COLOR_ORANGE : Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, barY + 12, Graphics.FONT_XTINY, ms.toString(), Graphics.TEXT_JUSTIFY_CENTER);
+        var liveSteps = getLiveSteps();
+        var stepsForArc = liveSteps;
+        if (stepsForArc == 0 && todaySteps != null) {
+            stepsForArc = todaySteps;
         }
 
-        // "Nog X!" text if close to next milestone
-        if (daysToMilestone != null && daysToMilestone <= 3) {
+        var progress = 0.0;
+        if (stepGoal > 0) {
+            progress = stepsForArc.toFloat() / stepGoal.toFloat();
+        }
+        if (progress > 1.0) {
+            progress = 1.0;
+        }
+
+        // Arc background track (dark gray)
+        // dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        // dc.setPenWidth(1);
+        // dc.drawArc(centerX, centerY, radius, Graphics.ARC_CLOCKWISE, arcStart, arcEnd);
+
+        // Arc progress (orange) - fills clockwise from 7 o'clock toward 5 o'clock
+        if (progress > 0.0) {
             dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, barY + 26, Graphics.FONT_XTINY, "Nog " + daysToMilestone.toString() + "!", Graphics.TEXT_JUSTIFY_CENTER);
-        }
-
-        // ── Freeze shields (bottom) ──
-        var shieldY = h * 82 / 100;
-
-        // Draw shield circles
-        for (var j = 0; j < 2; j++) {
-            var sx = w / 2 - 20 + j * 22;
-            if (freezes != null && freezes > j) {
-                dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-            } else {
-                dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(2);
+            var sweepDegrees = (progress * arcSpan.toFloat()).toNumber();
+            var progressEnd = arcStart - sweepDegrees;
+            if (progressEnd < 0) {
+                progressEnd = progressEnd + 360;
             }
-            dc.fillCircle(sx, shieldY, 6);
+            dc.drawArc(centerX, centerY, radius, Graphics.ARC_CLOCKWISE, arcStart, progressEnd);
+        }
+        dc.setPenWidth(1);
+
+        // ── Hero streak number (large, white, centered) ──
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(centerX, centerY - 20, Graphics.FONT_NUMBER_HOT, streak.toString(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // ── Freeze indicators (snowflake bitmaps below hero number) ──
+        if (freezes != null && freezes > 0) {
+            var freezeY = centerY + 35;
+            if (freezes == 1) {
+                dc.drawBitmap(centerX - 10, freezeY - 10, snowflakeIcon);
+            } else if (freezes >= 2) {
+                dc.drawBitmap(centerX - 24, freezeY - 10, snowflakeIcon);
+                dc.drawBitmap(centerX + 4, freezeY - 10, snowflakeIcon);
+            }
         }
 
-        // Freeze count text
-        var freezeCount = (freezes != null) ? freezes : 0;
-        var freezeText = freezeCount.toString() + "/2";
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2 + 20, shieldY, Graphics.FONT_XTINY, freezeText, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        // ── Weekly status row (bottom, below the arc gap) ──
+        
+        if (week != null) {
+            var rowY = h * 75 / 100;
+            var totalWidth = w * 55 / 100;
+            var spacing = totalWidth / 6;
+            var startX = (w - totalWidth) / 2;
+
+            for (var i = 0; i < 7; i++) {
+                if (i >= week.size()) {
+                    break;
+                }
+                var dayData = week[i];
+                var posX = startX + i * spacing;
+                var status = dayData["status"];
+                var dayLetter = dayData["day"];
+
+                // Real-time update for today
+                if (i == 6 && status.equals("pending")) {
+                    if (liveSteps >= stepGoal) {
+                        status = "hit";
+                    }
+                }
+
+                if (status.equals("hit")) {
+                    dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+                    drawCheck(dc, posX, rowY, 5);
+                } else if (status.equals("freeze")) {
+                    dc.drawBitmap(posX - 6, rowY - 6, snowflakeSmall);
+                } else {
+                    dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+                    dc.drawText(posX, rowY, Graphics.FONT_XTINY, dayLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+                }
+            }
+        }
 
         // ── Offline indicator ──
         if (isOffline) {
             dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, h - 12, Graphics.FONT_XTINY, "(offline)", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(w / 2, h * 92 / 100, Graphics.FONT_XTINY, "(offline)", Graphics.TEXT_JUSTIFY_CENTER);
+        }
+    }
+
+    // ── Screen 2: Milestone Detail ──
+    function drawDetailScreen(dc, w, h) as Void {
+        // Light background
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_WHITE);
+        dc.clear();
+
+        var centerX = w / 2;
+
+        if (nextMilestone != null && daysToMilestone != null) {
+            // "Volgende: X dagen" label
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 18 / 100, Graphics.FONT_XTINY, "Volgende: " + nextMilestone.toString() + " dagen", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // Days remaining (large hero number)
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 33 / 100, Graphics.FONT_NUMBER_HOT, daysToMilestone.toString(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // "nog te gaan"
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 47 / 100, Graphics.FONT_XTINY, "nog te gaan", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // Divider line
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawLine(w * 20 / 100, h * 56 / 100, w * 80 / 100, h * 56 / 100);
+
+            // "Langste" label
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 63 / 100, Graphics.FONT_XTINY, "Langste", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // Longest streak number
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 75 / 100, Graphics.FONT_NUMBER_MILD, longest != null ? longest.toString() : "0", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // "dagen"
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 86 / 100, Graphics.FONT_XTINY, "dagen", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else {
+            // All milestones achieved — show only longest streak
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 30 / 100, Graphics.FONT_XTINY, "Langste", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 48 / 100, Graphics.FONT_NUMBER_HOT, longest != null ? longest.toString() : "0", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(centerX, h * 62 / 100, Graphics.FONT_XTINY, "dagen", Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 }

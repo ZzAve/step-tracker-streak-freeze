@@ -1,4 +1,0 @@
-<properties>
-    <property id="apiKey" type="string"></property>
-    <property id="apiUrl" type="string">https://your-app.vercel.app</property>
-</properties>
