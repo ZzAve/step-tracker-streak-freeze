@@ -1,0 +1,204 @@
+/* ── Design tokens ──────────────────────────────── */
+:root {
+  /* Warm dark mode basis */
+  --bg: #12100e;
+  --surface: #1e1a16;
+  --surface-alt: #28231c;
+  --border: #3a3028;
+
+  /* Tekst */
+  --text: #f0e6d6;
+  --text-muted: #9a8b78;
+
+  /* Accent — amber/goud */
+  --accent: #e8a44a;
+  --accent-hover: #f0b866;
+  --accent-glow: rgba(232, 164, 74, 0.15);
+
+  /* Status kleuren — warmer */
+  --green: #7bc67e;
+  --green-bg: #1a2e1a;
+  --red: #d4736c;
+  --red-bg: #2e1a1a;
+
+  /* Spacing */
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+
+/* ── Global reset ──────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  background-image: radial-gradient(
+    ellipse at 50% 30%,
+    rgba(232, 164, 74, 0.03) 0%,
+    transparent 70%
+  );
+  color: var(--text);
+  font-family: 'Nunito', system-ui, sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Header layout ─────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.app-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Cards ─────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2), 0 0 1px rgba(232, 164, 74, 0.1);
+  animation: fadeInUp 0.5s ease both;
+}
+
+.card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* ── Modal system ──────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 320px;
+  width: calc(100% - 2rem);
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: fadeInUp 0.25s ease both;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.modal-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.btn-modal-cancel {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-modal-cancel:hover {
+  background: var(--border);
+}
+
+.btn-modal-danger {
+  background: var(--red);
+  border: none;
+  color: #fff;
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-modal-danger:hover {
+  background: #c0625b;
+  transform: translateY(-1px);
+}
+
+/* ── Loading / Error states ────────────────────── */
+.state-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Animations ────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Utilities ─────────────────────────────────── */
+.hidden { display: none !important; }
