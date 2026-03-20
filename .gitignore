@@ -17,3 +17,6 @@ node_modules/
 # Build artifacts
 garmin-widget/bin/
 garmin-widget/resources/properties.xml
+
+# Worktrees
+.worktrees/
