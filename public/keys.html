@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Keys — Stappen Streak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #12100e;
+      --surface: #1e1a16;
+      --surface-alt: #28231c;
+      --border: #3a3028;
+      --text: #f0e6d6;
+      --text-muted: #9a8b78;
+      --accent: #e8a44a;
+      --accent-hover: #f0b866;
+      --accent-glow: rgba(232, 164, 74, 0.15);
+      --green: #7bc67e;
+      --green-bg: #1a2e1a;
+      --red: #d4736c;
+      --red-bg: #2e1a1a;
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at 50% 30%, rgba(232, 164, 74, 0.03) 0%, transparent 70%);
+      color: var(--text);
+      font-family: 'Nunito', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .app-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-back {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-back:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2), 0 0 1px rgba(232, 164, 74, 0.1);
+      animation: fadeInUp 0.5s ease both;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.1s; }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .info-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    /* Create key form */
+    .create-form {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+      margin-bottom: 0.5rem;
+    }
+
+    .create-input {
+      flex: 1;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 0.6rem 0.8rem;
+      font-size: 0.85rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .create-input:focus { border-color: var(--accent); }
+    .create-input::placeholder { color: var(--text-muted); }
+
+    .btn-create {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-create:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-create:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .key-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .error-msg {
+      color: var(--red);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      min-height: 1.2em;
+    }
+
+    /* Show-once key banner */
+    .new-key-banner {
+      display: none;
+      background: var(--green-bg);
+      border: 1px solid var(--green);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      animation: fadeInUp 0.3s ease both;
+    }
+
+    .new-key-banner.visible { display: block; }
+
+    .new-key-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 0.4rem;
+    }
+
+    .new-key-warning {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .new-key-value {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .new-key-code {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--accent);
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .btn-copy {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.8rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover { border-color: var(--accent); }
+
+    /* Key list */
+    .key-list { list-style: none; }
+
+    .key-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      gap: 0.75rem;
+    }
+
+    .key-item:last-child { border-bottom: none; }
+
+    .key-info { flex: 1; min-width: 0; }
+
+    .key-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .key-prefix {
+      font-size: 0.8rem;
+      font-family: monospace;
+      color: var(--accent);
+    }
+
+    .key-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .key-expired {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.35rem 0.7rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      color: var(--red);
+      border-color: var(--red);
+      background: var(--red-bg);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 1.5rem 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Delete confirmation modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 320px;
+      width: calc(100% - 2rem);
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      animation: fadeInUp 0.25s ease both;
+    }
+
+    .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .modal-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+    .btn-modal-cancel {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-modal-cancel:hover { background: var(--border); }
+
+    .btn-modal-danger {
+      background: var(--red);
+      border: none;
+      color: #fff;
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-modal-danger:hover { background: #c0625b; transform: translateY(-1px); }
+
+    /* Loading */
+    .state-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 1rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading-screen" class="state-screen">
+    <div class="spinner"></div>
+    <span>Laden…</span>
+  </div>
+
+  <!-- Main content -->
+  <div id="keys-page" class="container hidden">
+    <header>
+      <span class="app-title">🔑 API Keys</span>
+      <a href="/" class="btn-back">← Dashboard</a>
+    </header>
+
+    <!-- Info card -->
+    <div class="card">
+      <div class="card-label">Garmin Widget Integratie</div>
+      <p class="info-text">
+        API keys worden gebruikt om de Garmin Connect IQ widget te koppelen aan je account.
+        Genereer een key en voer deze in bij de widget-instellingen op je Garmin horloge.
+        Keys zijn 365 dagen geldig en worden na aanmaken maar één keer getoond.
+      </p>
+
+      <!-- New key banner (shown once after creation) -->
+      <div class="new-key-banner" id="new-key-banner">
+        <div class="new-key-label">Nieuwe key aangemaakt</div>
+        <div class="new-key-warning">Kopieer deze key nu — je kunt hem hierna niet meer zien.</div>
+        <div class="new-key-value">
+          <code class="new-key-code" id="new-key-value"></code>
+          <button class="btn-copy" id="btn-copy">Kopiëren</button>
+        </div>
+      </div>
+
+      <!-- Create form -->
+      <div class="create-form">
+        <input type="text" class="create-input" id="key-name-input" placeholder="Naam (optioneel, bijv. 'Garmin Fenix')" maxlength="50">
+        <button class="btn-create" id="btn-create-key">Nieuwe key</button>
+      </div>
+      <div class="key-count" id="key-count"></div>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <!-- Key list card -->
+    <div class="card">
+      <div class="card-label">Je API Keys</div>
+      <div id="key-list-container">
+        <div class="empty-state" id="empty-state">Je hebt nog geen API keys.</div>
+        <ul class="key-list" id="key-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal-card">
+      <div class="modal-title">Key verwijderen</div>
+      <div class="modal-text">Weet je zeker dat je deze key wilt verwijderen? De Garmin widget zal niet meer werken met deze key.</div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modal-cancel">Annuleren</button>
+        <button class="btn-modal-danger" id="modal-confirm-delete">Verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const MAX_KEYS = 3;
+      let deleteKeyId = null;
+
+      function show(id) { document.getElementById(id).classList.remove('hidden'); }
+      function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+      function fmtDate(iso) {
+        const d = new Date(iso);
+        const months = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      }
+
+      function isExpired(expiresAt) {
+        return new Date(expiresAt) < new Date();
+      }
+
+      // ── Render key list ──────────────────────────────
+
+      function renderKeys(keys) {
+        const list = document.getElementById('key-list');
+        const empty = document.getElementById('empty-state');
+        const countEl = document.getElementById('key-count');
+
+        list.innerHTML = '';
+        countEl.textContent = `${keys.length} / ${MAX_KEYS} keys`;
+
+        if (keys.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+
+        keys.forEach(key => {
+          const li = document.createElement('li');
+          li.className = 'key-item';
+
+          const expired = isExpired(key.expires_at);
+          const lastUsed = key.last_used_at ? fmtDate(key.last_used_at) : 'Nooit';
+
+          li.innerHTML = `
+            <div class="key-info">
+              <div>
+                <span class="key-name">${key.name || 'Naamloos'}</span>
+                <span class="key-prefix">${key.prefix}…</span>
+              </div>
+              <div class="key-meta">
+                Aangemaakt: ${fmtDate(key.created_at)}
+                · Verloopt: ${expired ? '<span class="key-expired">Verlopen</span>' : fmtDate(key.expires_at)}
+                · Laatst gebruikt: ${lastUsed}
+              </div>
+            </div>
+          `;
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-delete';
+          deleteBtn.textContent = 'Verwijderen';
+          deleteBtn.addEventListener('click', () => {
+            deleteKeyId = key.id;
+            document.getElementById('delete-modal').classList.add('open');
+          });
+
+          li.appendChild(deleteBtn);
+          list.appendChild(li);
+        });
+      }
+
+      // ── Load keys ────────────────────────────────────
+
+      async function loadKeys() {
+        const res = await fetch('/api/apikey');
+        if (res.status === 401) {
+          window.location.href = '/';
+          return;
+        }
+        const data = await res.json();
+        renderKeys(data.keys || []);
+      }
+
+      // ── Create key ───────────────────────────────────
+
+      document.getElementById('btn-create-key').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-create-key');
+        const nameInput = document.getElementById('key-name-input');
+        const errorEl = document.getElementById('error-msg');
+        errorEl.textContent = '';
+
+        btn.disabled = true;
+        btn.textContent = 'Bezig…';
+
+        try {
+          const body = {};
+          if (nameInput.value.trim()) body.name = nameInput.value.trim();
+
+          const res = await fetch('/api/apikey', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            errorEl.textContent = data.error || 'Fout bij aanmaken';
+            return;
+          }
+
+          // Show the key once
+          document.getElementById('new-key-value').textContent = data.key;
+          document.getElementById('new-key-banner').classList.add('visible');
+          nameInput.value = '';
+
+          // Refresh list
+          await loadKeys();
+        } catch (err) {
+          errorEl.textContent = 'Netwerkfout, probeer opnieuw';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Nieuwe key';
+        }
+      });
+
+      // ── Copy key ─────────────────────────────────────
+
+      document.getElementById('btn-copy').addEventListener('click', async () => {
+        const keyText = document.getElementById('new-key-value').textContent;
+        const btn = document.getElementById('btn-copy');
+        try {
+          await navigator.clipboard.writeText(keyText);
+          btn.textContent = 'Gekopieerd!';
+          setTimeout(() => { btn.textContent = 'Kopiëren'; }, 2000);
+        } catch {
+          btn.textContent = 'Fout';
+          setTimeout(() => { btn.textContent = 'Kopiëren'; }, 2000);
+        }
+      });
+
+      // ── Delete key ───────────────────────────────────
+
+      const deleteModal = document.getElementById('delete-modal');
+
+      document.getElementById('modal-cancel').addEventListener('click', () => {
+        deleteModal.classList.remove('open');
+        deleteKeyId = null;
+      });
+
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+          deleteModal.classList.remove('open');
+          deleteKeyId = null;
+        }
+      });
+
+      document.getElementById('modal-confirm-delete').addEventListener('click', async () => {
+        if (!deleteKeyId) return;
+
+        const btn = document.getElementById('modal-confirm-delete');
+        btn.disabled = true;
+        btn.textContent = 'Bezig…';
+
+        try {
+          await fetch(`/api/apikey/${deleteKeyId}`, { method: 'DELETE' });
+          deleteModal.classList.remove('open');
+          deleteKeyId = null;
+          await loadKeys();
+        } catch {
+          // Silently fail, close modal
+          deleteModal.classList.remove('open');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Verwijderen';
+        }
+      });
+
+      // ── Init ─────────────────────────────────────────
+
+      async function init() {
+        try {
+          await loadKeys();
+          hide('loading-screen');
+          show('keys-page');
+        } catch (err) {
+          // Auth check — redirect to login
+          window.location.href = '/';
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
