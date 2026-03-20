@@ -3,9 +3,11 @@
 const GarminConnect = require('garmin-connect').GarminConnect;
 const { sql, initializeDatabase } = require('../../lib/db');
 const { createSessionCookie } = require('../../lib/session');
-const logger = require('../../lib/logger');
+const { createRequestLogger } = require('../../lib/request-logger');
 
 module.exports = async (req, res) => {
+  const { log, logResponse } = createRequestLogger(req);
+
   if (req.method !== 'POST') {
     res.status(405).setHeader('Allow', 'POST').end();
     return;
@@ -37,12 +39,14 @@ module.exports = async (req, res) => {
 
     res.setHeader('Set-Cookie', createSessionCookie(userId));
     res.status(200).json({ ok: true });
+    logResponse(res);
   } catch (err) {
-    logger.error(err, 'Login error');
+    log.error(err, 'Login error');
     if (err.message && (err.message.includes('401') || err.message.includes('credentials'))) {
       res.status(401).json({ error: 'Invalid Garmin credentials' });
     } else {
       res.status(500).json({ error: 'Login failed' });
     }
+    logResponse(res);
   }
 };
