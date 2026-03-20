@@ -1,14 +1,57 @@
 'use strict';
 
+const crypto = require('crypto');
 const { sql, initializeDatabase } = require('../lib/db');
 const { getUserFromSession, generateApiKey } = require('../lib/session');
+const logger = require('../lib/logger');
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST' && req.method !== 'GET') {
-    res.status(405).setHeader('Allow', 'GET, POST').end();
+const MAX_KEYS = 3;
+const KEY_LIFETIME_DAYS = 365;
+
+function hashKey(plaintext) {
+  return crypto.createHash('sha256').update(plaintext).digest('hex');
+}
+
+async function handleGet(userId, res) {
+  const keys = await sql`
+    SELECT id, name, prefix, created_at, expires_at, last_used_at
+    FROM api_keys
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  res.status(200).json({ keys });
+}
+
+async function handlePost(userId, req, res) {
+  const countResult = await sql`
+    SELECT COUNT(*)::int AS count FROM api_keys WHERE user_id = ${userId}
+  `;
+  if (countResult[0].count >= MAX_KEYS) {
+    res.status(400).json({ error: `Maximum van ${MAX_KEYS} API keys bereikt` });
     return;
   }
 
+  const name = req.body?.name || null;
+  const plaintext = generateApiKey();
+  const keyHash = hashKey(plaintext);
+  const prefix = plaintext.slice(0, 8);
+  const now = new Date();
+  const expiresAt = new Date(now);
+  expiresAt.setDate(expiresAt.getDate() + KEY_LIFETIME_DAYS);
+
+  const result = await sql`
+    INSERT INTO api_keys (user_id, name, key_hash, prefix, created_at, expires_at)
+    VALUES (${userId}, ${name}, ${keyHash}, ${prefix}, ${now.toISOString()}, ${expiresAt.toISOString()})
+    RETURNING id, name, prefix, created_at, expires_at
+  `;
+
+  res.status(201).json({
+    key: plaintext,
+    ...result[0],
+  });
+}
+
+module.exports = async (req, res) => {
   try {
     await initializeDatabase();
 
@@ -18,19 +61,18 @@ module.exports = async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET') {
-      const result = await sql`SELECT api_key FROM users WHERE id = ${userId}`;
-      const key = result[0]?.api_key || null;
-      res.status(200).json({ api_key: key });
-      return;
+    switch (req.method) {
+      case 'GET':
+        await handleGet(userId, res);
+        break;
+      case 'POST':
+        await handlePost(userId, req, res);
+        break;
+      default:
+        res.status(405).setHeader('Allow', 'GET, POST').end();
     }
-
-    // POST — generate new key
-    const newKey = generateApiKey();
-    await sql`UPDATE users SET api_key = ${newKey} WHERE id = ${userId}`;
-    res.status(200).json({ api_key: newKey });
   } catch (err) {
-    console.error('Error in /api/apikey:', err);
+    logger.error('Error in /api/apikey. %o', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
