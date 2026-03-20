@@ -38,6 +38,6 @@
 ## 6. Cleanup & Testing
 
 - [x] 6.1 Remove old layout code (fire icon drawing, horizontal progress bar, freeze shields with "X/2", step count display)
-- [ ] 6.2 Test on simulator with round screen device (Vivoactive 4)
+- [x] 6.2 Test on simulator with round screen device (Vivoactive 4)
 - [x] 6.3 Verify offline mode still works (cached data + indicator)
 - [x] 6.4 Verify "no API key" state still shows setup instructions

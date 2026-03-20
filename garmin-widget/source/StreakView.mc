@@ -103,7 +103,7 @@ class StreakView extends WatchUi.View {
 
     // ── Draw checkmark at position ──
     function drawCheck(dc, cx, cy, size) as Void {
-        dc.setPenWidth(2);
+        dc.setPenWidth(3);
         dc.drawLine(cx - size, cy, cx - size / 3, cy + size);
         dc.drawLine(cx - size / 3, cy + size, cx + size, cy - size);
         dc.setPenWidth(1);
@@ -162,7 +162,7 @@ class StreakView extends WatchUi.View {
         // Arc progress (orange) - fills clockwise from 7 o'clock toward 5 o'clock
         if (progress > 0.0) {
             dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(2);
+            dc.setPenWidth(4);
             var sweepDegrees = (progress * arcSpan.toFloat()).toNumber();
             var progressEnd = arcStart - sweepDegrees;
             if (progressEnd < 0) {
@@ -188,10 +188,9 @@ class StreakView extends WatchUi.View {
         }
 
         // ── Weekly status row (bottom, below the arc gap) ──
-        
         if (week != null) {
             var rowY = h * 75 / 100;
-            var totalWidth = w * 55 / 100;
+            var totalWidth = w * 65 / 100;
             var spacing = totalWidth / 6;
             var startX = (w - totalWidth) / 2;
 
@@ -213,12 +212,12 @@ class StreakView extends WatchUi.View {
 
                 if (status.equals("hit")) {
                     dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-                    drawCheck(dc, posX, rowY, 5);
+                    drawCheck(dc, posX, rowY, 7);
                 } else if (status.equals("freeze")) {
-                    dc.drawBitmap(posX - 6, rowY - 6, snowflakeSmall);
+                    dc.drawBitmap(posX - 6, rowY - 8, snowflakeSmall);
                 } else {
-                    dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-                    dc.drawText(posX, rowY, Graphics.FONT_XTINY, dayLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+                    dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+                    dc.drawText(posX, rowY, Graphics.FONT_TINY, dayLetter, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 }
             }
         }
