@@ -1,19 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: Widget toont streak informatie
-De Connect IQ widget SHALL de huidige streak-telling prominent tonen als groot gecentreerd getal (hero number) op het scherm. Boven het getal toont de widget een schoen-icoon (bitmap). Rond het getal toont de widget een cirkelvormige arc die de voortgang van vandaag's stappen richting het stapdoel visualiseert.
+De Connect IQ widget SHALL de huidige streak-telling prominent tonen op het scherm, samen met een shoe icon. De step progress arc SHALL een pen width van minimaal 4px hebben voor duidelijke zichtbaarheid op MIP displays.
 
 #### Scenario: Streak data beschikbaar
 - **WHEN** de widget streak data heeft opgehaald
-- **THEN** toont het scherm het schoen-icoon (bitmap) bovenaan, een oranje cirkelvormige arc (gevuld op basis van vandaag's stappen / stapdoel), en de streak-telling als groot gecentreerd wit getal
+- **THEN** toont het scherm de streak-telling (groot getal), het shoe icon bovenaan, en een step progress arc met pen width 4
 
-#### Scenario: Arc toont real-time stappen
-- **WHEN** de widget actief is en ActivityMonitor beschikbaar is
-- **THEN** gebruikt de arc de lokale ActivityMonitor stappen voor real-time voortgang, met fallback naar API `today_steps`
-
-#### Scenario: Stapdoel bereikt
-- **WHEN** vandaag's stappen >= `step_goal`
-- **THEN** is de arc volledig gevuld
+#### Scenario: Step progress arc zichtbaarheid
+- **WHEN** de widget rendert op een MIP display
+- **THEN** is de oranje step progress arc duidelijk zichtbaar met een dikte die vergelijkbaar is met native Garmin widgets
 
 ### Requirement: Widget toont milestone-voortgang
 De widget SHALL milestone-informatie tonen op een tweede scherm (detail screen), NIET op het hoofdscherm. Het hoofdscherm toont geen milestone-voortgangsbalk meer.
@@ -61,27 +57,15 @@ De widget SHALL data ophalen van `/api/widget` elke keer dat de gebruiker naar d
 - **THEN** toont de widget "Laden..." of een foutmelding
 
 ### Requirement: Widget toont wekelijkse status rij
-De widget SHALL onderaan het hoofdscherm een rij van 7 posities tonen: de afgelopen 6 dagen + vandaag. Elke positie toont de status van die dag.
+De widget SHALL een weekly status row tonen onderaan het scherm met voor elke dag een checkmark (hit), snowflake (freeze), of dag-letter (pending/not_met). Checkmarks SHALL een grootte van minimaal 7px hebben met pen width 3 voor goede leesbaarheid.
 
-#### Scenario: Dag met behaald stapdoel
-- **WHEN** een dag de status "hit" heeft
-- **THEN** toont die positie een vinkje (✓) in groen
+#### Scenario: Dag met behaald doel
+- **WHEN** een dag in de week de status "hit" heeft
+- **THEN** toont de widget een groen vinkje met grootte 7-8px en pen width 3
 
-#### Scenario: Dag met gebruikte freeze
-- **WHEN** een dag de status "freeze" heeft
-- **THEN** toont die positie een sneeuwvlok (❄) in blauw
-
-#### Scenario: Dag zonder behaald doel
-- **WHEN** een dag de status "not_met" heeft
-- **THEN** toont die positie de dagletter (M, T, W, etc.) in grijs
-
-#### Scenario: Vandaag nog niet bepaald
-- **WHEN** vandaag de status "pending" heeft en stappen < stapdoel
-- **THEN** toont die positie de dagletter in grijs
-
-#### Scenario: Vandaag real-time update
-- **WHEN** vandaag de status "pending" heeft maar ActivityMonitor stappen >= stapdoel
-- **THEN** toont die positie een vinkje (✓) in groen (real-time update)
+#### Scenario: Dag zonder data (pending/not_met)
+- **WHEN** een dag de status "pending" of "not_met" heeft
+- **THEN** toont de widget de dag-letter in `COLOR_LT_GRAY` voor voldoende contrast op MIP displays
 
 ### Requirement: Widget ondersteunt twee schermen met navigatie
 De widget SHALL twee schermen ondersteunen: een hoofdscherm (glance) en een detailscherm (milestone info). De gebruiker navigeert tussen schermen door te drukken/tikken.
