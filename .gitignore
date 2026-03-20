@@ -6,3 +6,14 @@ node_modules/
 *.log
 .DS_Store
 .vercel
+
+# Private keys
+*.der
+*.pem
+
+# IDE
+.idea/
+
+# Build artifacts
+garmin-widget/bin/
+garmin-widget/resources/properties.xml
