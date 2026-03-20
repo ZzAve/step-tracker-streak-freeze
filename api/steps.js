@@ -18,9 +18,11 @@ const { sql, initializeDatabase } = require('../lib/db');
 const { getUserFromSession } = require('../lib/session');
 const { calculateStreak } = require('../lib/streak');
 const { syncIfNeeded } = require('../lib/sync');
-const logger = require('../lib/logger');
+const { createRequestLogger } = require('../lib/request-logger');
 
 module.exports = async (req, res) => {
+  const { log, logResponse } = createRequestLogger(req);
+
   if (req.method !== 'GET') {
     res.status(405).setHeader('Allow', 'GET').end();
     return;
@@ -100,7 +102,7 @@ module.exports = async (req, res) => {
         freeze_count = EXCLUDED.freeze_count,
         days_since_last_freeze_earned = EXCLUDED.days_since_last_freeze_earned,
         updated_at = NOW()
-    `.catch(err => logger.error(err, 'Failed to upsert streak'));
+    `.catch(err => log.error(err, 'Failed to upsert streak'));
 
     // --- Build response ---
     const lastSyncedAt = user.last_synced_at ?? null;
@@ -116,8 +118,10 @@ module.exports = async (req, res) => {
       steps: allSteps,
       last_synced_at: lastSyncedAt,
     });
+    logResponse(res);
   } catch (err) {
-    logger.error(err, 'Error in /api/steps');
+    log.error(err, 'Error in /api/steps');
     res.status(500).json({ error: 'Internal server error' });
+    logResponse(res);
   }
 };

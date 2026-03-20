@@ -3,7 +3,7 @@
 const crypto = require('crypto');
 const { sql, initializeDatabase } = require('../lib/db');
 const { getUserFromSession, generateApiKey } = require('../lib/session');
-const logger = require('../lib/logger');
+const { createRequestLogger } = require('../lib/request-logger');
 
 const MAX_KEYS = 3;
 const KEY_LIFETIME_DAYS = 365;
@@ -52,6 +52,8 @@ async function handlePost(userId, req, res) {
 }
 
 module.exports = async (req, res) => {
+  const { log, logResponse } = createRequestLogger(req);
+
   try {
     await initializeDatabase();
 
@@ -71,8 +73,10 @@ module.exports = async (req, res) => {
       default:
         res.status(405).setHeader('Allow', 'GET, POST').end();
     }
+    logResponse(res);
   } catch (err) {
-    logger.error('Error in /api/apikey. %o', err);
+    log.error(err, 'Error in /api/apikey');
     res.status(500).json({ error: 'Internal server error' });
+    logResponse(res);
   }
 };

@@ -2,9 +2,11 @@
 
 const { sql, initializeDatabase } = require('../../lib/db');
 const { getUserFromSession } = require('../../lib/session');
-const logger = require('../../lib/logger');
+const { createRequestLogger } = require('../../lib/request-logger');
 
 module.exports = async (req, res) => {
+  const { log, logResponse } = createRequestLogger(req);
+
   if (req.method !== 'DELETE') {
     res.status(405).setHeader('Allow', 'DELETE').end();
     return;
@@ -37,8 +39,10 @@ module.exports = async (req, res) => {
     }
 
     res.status(200).json({ deleted: true });
+    logResponse(res);
   } catch (err) {
-    logger.error(err, 'Error in DELETE /api/apikey/[id]');
+    log.error(err, 'Error in DELETE /api/apikey/[id]');
     res.status(500).json({ error: 'Internal server error' });
+    logResponse(res);
   }
 };
