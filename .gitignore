@@ -17,6 +17,12 @@ node_modules/
 # Build artifacts
 garmin-widget/bin/
 garmin-widget/resources/properties.xml
+garmin-widget/source/*.prg
+garmin-widget/source/*.prg.debug.xml
+garmin-widget/source/garminwidget-settings.json
+garmin-widget/source/gen/
+garmin-widget/source/internal-mir/
+garmin-widget/source/mir/
 
 # Worktrees
 .worktrees/
