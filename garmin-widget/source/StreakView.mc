@@ -3,10 +3,14 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Communications;
 import Toybox.Application.Properties;
+import Toybox.Application.Storage;
 import Toybox.ActivityMonitor;
 import Toybox.Math;
+import Toybox.Time;
 
 class StreakView extends WatchUi.View {
+
+    const CACHE_TTL_SECONDS = 1800;
 
     // Cached data
     var streak = null;
@@ -35,7 +39,35 @@ class StreakView extends WatchUi.View {
     }
 
     function onShow() as Void {
-        fetchData();
+        var hasCachedData = loadCache();
+        if (hasCachedData) {
+            WatchUi.requestUpdate();
+        }
+
+        var cacheTimestamp = Storage.getValue("cacheTimestamp");
+        var now = Time.now().value();
+        if (cacheTimestamp == null || (now - cacheTimestamp) > CACHE_TTL_SECONDS) {
+            fetchData();
+        }
+    }
+
+    function loadCache() as Lang.Boolean {
+        var raw = Storage.getValue("cachedData");
+        if (raw == null) {
+            return false;
+        }
+        var cachedData = raw as Lang.Dictionary;
+        streak = cachedData["streak"];
+        longest = cachedData["longest"];
+        freezes = cachedData["freezes"];
+        nextMilestone = cachedData["next_milestone"];
+        daysToMilestone = cachedData["days_to_milestone"];
+        todaySteps = cachedData["today_steps"];
+        if (cachedData["step_goal"] != null) {
+            stepGoal = cachedData["step_goal"];
+        }
+        week = cachedData["week"] as Lang.Dictionary;
+        return true;
     }
 
     function fetchData() as Void {
@@ -73,9 +105,13 @@ class StreakView extends WatchUi.View {
                 stepGoal = data["step_goal"];
             }
             week = data["week"] as Lang.Dictionary;
+            Storage.setValue("cachedData", data);
+            Storage.setValue("cacheTimestamp", Time.now().value());
             isOffline = false;
         } else {
-            isOffline = (streak != null);
+            var ts = Storage.getValue("cacheTimestamp");
+            var isVeryStale = (ts != null && (Time.now().value() - ts) > 10800);
+            isOffline = (streak != null) || isVeryStale;
         }
 
         isLoading = false;
@@ -130,13 +166,18 @@ class StreakView extends WatchUi.View {
         var centerY = h / 2;
         var radius = w / 2 - 8; // Nearly full screen, just inside bezel
 
+        // ── Refresh indicator (background refresh in progress) ──
+        if (isLoading) {
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(w * 50 / 100, h * 6 / 100, 4);
+        }
+
         // ── Shoe icon (top center, bitmap) ──
         dc.drawBitmap(centerX - 20, centerY - radius + 20, shoeIcon);
 
         // ── Circular arc for today's step progress ──
-        // Native-style: 240° arc with 120° gap at the bottom
+        // Native-style: 360° arc 
         var arcStart = 90; // 12 o'clock
-        var arcEnd = 90;   // 12 o'clock
         var arcSpan = 360;  // total degrees of arc
 
         var liveSteps = getLiveSteps();
@@ -153,12 +194,7 @@ class StreakView extends WatchUi.View {
             progress = 1.0;
         }
 
-        // Arc background track (dark gray)
-        // dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-        // dc.setPenWidth(1);
-        // dc.drawArc(centerX, centerY, radius, Graphics.ARC_CLOCKWISE, arcStart, arcEnd);
-
-        // Arc progress (orange) - fills clockwise from 7 o'clock toward 5 o'clock
+        // Arc progress (orange) - fills clockwise from 12 o'clock toward 12 o'clock
         if (progress > 0.0) {
             dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(4);
@@ -224,7 +260,7 @@ class StreakView extends WatchUi.View {
         // ── Offline indicator ──
         if (isOffline) {
             dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, h * 92 / 100, Graphics.FONT_XTINY, "(offline)", Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawText(w / 2, h * 85 / 100, Graphics.FONT_XTINY, "offline", Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
