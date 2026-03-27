@@ -16,7 +16,7 @@
 
 const { sql, initializeDatabase } = require('../lib/db');
 const { getUserFromSession } = require('../lib/session');
-const { calculateStreak } = require('../lib/streak');
+const { fetchStepsAndStreak } = require('../lib/steps');
 const { syncIfNeeded } = require('../lib/sync');
 const { createRequestLogger } = require('../lib/request-logger');
 
@@ -64,25 +64,8 @@ module.exports = async (req, res) => {
       throw err;
     }
 
-    // --- Fetch all step data for this user ---
-    const stepsResult = await sql`
-      SELECT date, steps, goal_met
-      FROM daily_steps
-      WHERE user_id = ${user.id}
-      ORDER BY date ASC
-    `;
-    const allSteps = stepsResult.map((row) => {
-      return ({
-        date: row.date instanceof Date
-            ? `${row.date.getFullYear()}-${String(row.date.getMonth() + 1).padStart(2, '0')}-${String(row.date.getDate()).padStart(2, '0')}`
-            : String(row.date).slice(0, 10),
-        steps: row.steps,
-        goal_met: row.goal_met,
-      });
-    });
-
-    // --- Calculate streak ---
-    const streakResult = calculateStreak(allSteps, null);
+    // --- Fetch steps & calculate streak ---
+    const { allSteps, streak: streakResult } = await fetchStepsAndStreak(user.id);
 
     // --- Upsert streaks table (fire-and-forget, don't block response) ---
     sql`
