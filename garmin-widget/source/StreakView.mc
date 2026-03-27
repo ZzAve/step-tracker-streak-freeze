@@ -7,10 +7,12 @@ import Toybox.Application.Storage;
 import Toybox.ActivityMonitor;
 import Toybox.Math;
 import Toybox.Time;
+import Toybox.Time.Gregorian;
 
 class StreakView extends WatchUi.View {
 
-    const CACHE_TTL_SECONDS = 1800;
+    const CACHE_TTL_SECONDS = 1800; // legacy fallback only
+    const MIN_REFRESH_INTERVAL_SECONDS = 420; // 7 minutes
 
     // Cached data
     var streak = null;
@@ -46,7 +48,24 @@ class StreakView extends WatchUi.View {
 
         var cacheTimestamp = Storage.getValue("cacheTimestamp");
         var now = Time.now().value();
-        if (cacheTimestamp == null || (now - cacheTimestamp) > CACHE_TTL_SECONDS) {
+
+        // Minimum refresh interval guard (7 minutes)
+        if (cacheTimestamp != null && (now - cacheTimestamp) < MIN_REFRESH_INTERVAL_SECONDS) {
+            return;
+        }
+
+        // Server-driven staleness check with legacy fallback
+        var storedRefreshAfter = Storage.getValue("refreshAfter");
+        var isStale;
+        if (storedRefreshAfter != null) {
+            isStale = (now >= storedRefreshAfter);
+        } else if (cacheTimestamp != null) {
+            isStale = ((now - cacheTimestamp) > CACHE_TTL_SECONDS);
+        } else {
+            isStale = true;
+        }
+
+        if (isStale) {
             fetchData();
         }
     }
@@ -107,6 +126,12 @@ class StreakView extends WatchUi.View {
             week = data["week"] as Lang.Dictionary;
             Storage.setValue("cachedData", data);
             Storage.setValue("cacheTimestamp", Time.now().value());
+            if (data["refreshAfter"] != null) {
+                var parsed = parseIso8601(data["refreshAfter"]);
+                if (parsed != null) {
+                    Storage.setValue("refreshAfter", parsed);
+                }
+            }
             isOffline = false;
         } else {
             var ts = Storage.getValue("cacheTimestamp");
@@ -124,6 +149,27 @@ class StreakView extends WatchUi.View {
             return info.steps;
         }
         return 0;
+    }
+
+    // Parse "2026-03-25T11:00:00.000Z" → Garmin epoch seconds
+    function parseIso8601(iso as Lang.String) as Lang.Number or Null {
+        if (iso == null || iso.length() < 19) {
+            return null;
+        }
+        var year = iso.substring(0, 4).toNumber();
+        var month = iso.substring(5, 7).toNumber();
+        var day = iso.substring(8, 10).toNumber();
+        var hour = iso.substring(11, 13).toNumber();
+        var minute = iso.substring(14, 16).toNumber();
+        var second = iso.substring(17, 19).toNumber();
+        if (year == null || month == null || day == null || hour == null || minute == null || second == null) {
+            return null;
+        }
+        var moment = Gregorian.moment({
+            :year => year, :month => month, :day => day,
+            :hour => hour, :minute => minute, :second => second
+        });
+        return moment.value();
     }
 
     function onUpdate(dc) as Void {

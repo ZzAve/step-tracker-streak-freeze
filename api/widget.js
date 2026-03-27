@@ -3,10 +3,21 @@
 const crypto = require('crypto');
 const { sql, initializeDatabase } = require('../lib/db');
 const { calculateStreak, STEP_GOAL } = require('../lib/streak');
-const { syncIfNeeded, todayStr } = require('../lib/sync');
+const { syncIfNeeded, todayStr, SYNC_COOLDOWN_MS } = require('../lib/sync');
 const { createRequestLogger } = require('../lib/request-logger');
 
 const MILESTONES = [5, 10, 25, 50, 100];
+
+function computeCacheMeta(lastSyncedAtRaw, syncCooldownMs) {
+  const lastSyncedAt = lastSyncedAtRaw ? new Date(lastSyncedAtRaw).getTime() : null;
+  const lastUpdatedAt = lastSyncedAt !== null
+    ? new Date(lastSyncedAt).toISOString()
+    : null;
+  const refreshAfter = lastSyncedAt !== null
+    ? new Date(lastSyncedAt + syncCooldownMs).toISOString()
+    : new Date().toISOString();
+  return { lastUpdatedAt, refreshAfter };
+}
 
 module.exports = async (req, res) => {
   const { log, logResponse } = createRequestLogger(req);
@@ -111,6 +122,9 @@ module.exports = async (req, res) => {
       }
     }
 
+    // --- Cache metadata ---
+    const { lastUpdatedAt, refreshAfter } = computeCacheMeta(user.last_synced_at, SYNC_COOLDOWN_MS);
+
     // --- Compact response ---
     log.debug({ streak: streak.current_streak, todaySteps, nextMilestone }, 'Responding');
     res.status(200).json({
@@ -122,6 +136,8 @@ module.exports = async (req, res) => {
       today_steps: todaySteps,
       step_goal: STEP_GOAL,
       week: week,
+      lastUpdatedAt: lastUpdatedAt,
+      refreshAfter: refreshAfter,
     });
     logResponse(res);
   } catch (err) {
@@ -130,3 +146,5 @@ module.exports = async (req, res) => {
     logResponse(res);
   }
 };
+
+module.exports.computeCacheMeta = computeCacheMeta;
