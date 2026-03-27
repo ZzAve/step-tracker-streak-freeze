@@ -6,36 +6,35 @@ const { computeCacheMeta } = require('./widget');
 
 const SYNC_COOLDOWN_MS = 3600000; // 1 hour
 
-test('lastUpdatedAt is epoch seconds of last_synced_at when user has synced', () => {
+test('lastUpdatedAt is ISO 8601 of last_synced_at when user has synced', () => {
   const lastSyncedAt = '2026-03-25T10:00:00Z';
   const { lastUpdatedAt } = computeCacheMeta(lastSyncedAt, SYNC_COOLDOWN_MS);
-  const expected = Math.floor(new Date(lastSyncedAt).getTime() / 1000);
-  assert.equal(lastUpdatedAt, expected);
+  assert.equal(lastUpdatedAt, '2026-03-25T10:00:00.000Z');
 });
 
-test('refreshAfter is last_synced_at + SYNC_COOLDOWN_MS in epoch seconds when user has synced', () => {
+test('refreshAfter is ISO 8601 of last_synced_at + cooldown when user has synced', () => {
   const lastSyncedAt = '2026-03-25T10:00:00Z';
   const { refreshAfter } = computeCacheMeta(lastSyncedAt, SYNC_COOLDOWN_MS);
-  const expected = Math.floor((new Date(lastSyncedAt).getTime() + SYNC_COOLDOWN_MS) / 1000);
-  assert.equal(refreshAfter, expected);
+  assert.equal(refreshAfter, '2026-03-25T11:00:00.000Z');
 });
 
-test('lastUpdatedAt is 0 when user has never synced', () => {
+test('lastUpdatedAt is null when user has never synced', () => {
   const { lastUpdatedAt } = computeCacheMeta(null, SYNC_COOLDOWN_MS);
-  assert.equal(lastUpdatedAt, 0);
+  assert.equal(lastUpdatedAt, null);
 });
 
-test('refreshAfter is current server time when user has never synced', () => {
-  const before = Math.floor(Date.now() / 1000);
+test('refreshAfter is ~current time as ISO 8601 when user has never synced', () => {
+  const before = Date.now();
   const { refreshAfter } = computeCacheMeta(null, SYNC_COOLDOWN_MS);
-  const after = Math.floor(Date.now() / 1000);
-  assert.ok(refreshAfter >= before && refreshAfter <= after,
-    `refreshAfter (${refreshAfter}) should be ~current time (${before}-${after})`);
+  const after = Date.now();
+  const parsed = new Date(refreshAfter).getTime();
+  assert.ok(parsed >= before && parsed <= after,
+    `refreshAfter (${refreshAfter}) should be ~current time`);
 });
 
 test('handles Date object for last_synced_at', () => {
   const lastSyncedAt = new Date('2026-03-25T10:00:00Z');
   const { lastUpdatedAt, refreshAfter } = computeCacheMeta(lastSyncedAt, SYNC_COOLDOWN_MS);
-  assert.equal(lastUpdatedAt, Math.floor(lastSyncedAt.getTime() / 1000));
-  assert.equal(refreshAfter, Math.floor((lastSyncedAt.getTime() + SYNC_COOLDOWN_MS) / 1000));
+  assert.equal(lastUpdatedAt, '2026-03-25T10:00:00.000Z');
+  assert.equal(refreshAfter, '2026-03-25T11:00:00.000Z');
 });

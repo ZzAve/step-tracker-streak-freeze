@@ -10,10 +10,12 @@ const MILESTONES = [5, 10, 25, 50, 100];
 
 function computeCacheMeta(lastSyncedAtRaw, syncCooldownMs) {
   const lastSyncedAt = lastSyncedAtRaw ? new Date(lastSyncedAtRaw).getTime() : null;
-  const lastUpdatedAt = lastSyncedAt !== null ? Math.floor(lastSyncedAt / 1000) : 0;
+  const lastUpdatedAt = lastSyncedAt !== null
+    ? new Date(lastSyncedAt).toISOString()
+    : null;
   const refreshAfter = lastSyncedAt !== null
-    ? Math.floor((lastSyncedAt + syncCooldownMs) / 1000)
-    : Math.floor(Date.now() / 1000);
+    ? new Date(lastSyncedAt + syncCooldownMs).toISOString()
+    : new Date().toISOString();
   return { lastUpdatedAt, refreshAfter };
 }
 
