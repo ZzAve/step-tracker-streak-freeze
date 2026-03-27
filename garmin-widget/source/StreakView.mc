@@ -10,7 +10,8 @@ import Toybox.Time;
 
 class StreakView extends WatchUi.View {
 
-    const CACHE_TTL_SECONDS = 1800;
+    const CACHE_TTL_SECONDS = 1800; // legacy fallback only
+    const MIN_REFRESH_INTERVAL_SECONDS = 420; // 7 minutes
 
     // Cached data
     var streak = null;
@@ -46,7 +47,24 @@ class StreakView extends WatchUi.View {
 
         var cacheTimestamp = Storage.getValue("cacheTimestamp");
         var now = Time.now().value();
-        if (cacheTimestamp == null || (now - cacheTimestamp) > CACHE_TTL_SECONDS) {
+
+        // Minimum refresh interval guard (7 minutes)
+        if (cacheTimestamp != null && (now - cacheTimestamp) < MIN_REFRESH_INTERVAL_SECONDS) {
+            return;
+        }
+
+        // Server-driven staleness check with legacy fallback
+        var storedRefreshAfter = Storage.getValue("refreshAfter");
+        var isStale;
+        if (storedRefreshAfter != null) {
+            isStale = (now >= storedRefreshAfter);
+        } else if (cacheTimestamp != null) {
+            isStale = ((now - cacheTimestamp) > CACHE_TTL_SECONDS);
+        } else {
+            isStale = true;
+        }
+
+        if (isStale) {
             fetchData();
         }
     }
@@ -107,6 +125,9 @@ class StreakView extends WatchUi.View {
             week = data["week"] as Lang.Dictionary;
             Storage.setValue("cachedData", data);
             Storage.setValue("cacheTimestamp", Time.now().value());
+            if (data["refreshAfter"] != null) {
+                Storage.setValue("refreshAfter", data["refreshAfter"]);
+            }
             isOffline = false;
         } else {
             var ts = Storage.getValue("cacheTimestamp");
