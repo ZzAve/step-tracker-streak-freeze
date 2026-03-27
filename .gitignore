@@ -26,3 +26,4 @@ garmin-widget/source/mir/
 
 # Worktrees
 .worktrees/
+/garmin-widget/build
