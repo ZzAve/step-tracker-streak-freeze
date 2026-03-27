@@ -2,7 +2,8 @@
 
 const crypto = require('crypto');
 const { sql, initializeDatabase } = require('../lib/db');
-const { calculateStreak, STEP_GOAL } = require('../lib/streak');
+const { STEP_GOAL } = require('../lib/streak');
+const { fetchStepsAndStreak } = require('../lib/steps');
 const { syncIfNeeded, todayStr, SYNC_COOLDOWN_MS } = require('../lib/sync');
 const { createRequestLogger } = require('../lib/request-logger');
 
@@ -63,30 +64,15 @@ module.exports = async (req, res) => {
     const user = { id: keyRow.id, garmin_tokens: keyRow.garmin_tokens, last_synced_at: keyRow.last_synced_at };
 
     // --- Sync if needed (non-fatal — serve stale data on failure) ---
-    log.debug({ userId: user.id, last_synced_at: user.last_synced_at }, 'Checking sync');
+    log.debug('Checking sync %o', { userId: user.id, last_synced_at: user.last_synced_at });
     const didSync = await syncIfNeeded(user, { fatalOnMissingTokens: false, fatalOnSyncError: false });
     log.debug('syncIfNeeded result: %s', didSync ? 'SYNCED' : 'SKIPPED (cooldown or no tokens)');
 
     // --- Fetch steps & calculate streak ---
     log.debug('Fetching all step data for user %s', user.id);
-    const stepsResult = await sql`
-      SELECT date, steps, goal_met
-      FROM daily_steps
-      WHERE user_id = ${user.id}
-      ORDER BY date ASC
-    `;
-    const allSteps = stepsResult.map((row) => ({
-      date: row.date instanceof Date
-        ? `${row.date.getFullYear()}-${String(row.date.getMonth() + 1).padStart(2, '0')}-${String(row.date.getDate()).padStart(2, '0')}`
-        : String(row.date).slice(0, 10),
-      steps: row.steps,
-      goal_met: row.goal_met,
-    }));
-
+    const { allSteps, streak } = await fetchStepsAndStreak(user.id);
     log.debug('Found %d step records in DB', allSteps.length);
-
-    const streak = calculateStreak(allSteps, null);
-    log.debug({ current: streak.current_streak, longest: streak.longest_streak, freezes: streak.freeze_count }, 'Streak result');
+    log.debug('Streak result %o', { current: streak.current_streak, longest: streak.longest_streak, freezes: streak.freeze_count });
 
     // --- Compute milestone info ---
     let nextMilestone = null;
@@ -126,7 +112,7 @@ module.exports = async (req, res) => {
     const { lastUpdatedAt, refreshAfter } = computeCacheMeta(user.last_synced_at, SYNC_COOLDOWN_MS);
 
     // --- Compact response ---
-    log.debug({ streak: streak.current_streak, todaySteps, nextMilestone }, 'Responding');
+    log.debug('Responding %o', { streak: streak.current_streak, todaySteps, nextMilestone });
     res.status(200).json({
       streak: streak.current_streak,
       longest: streak.longest_streak,
@@ -141,7 +127,7 @@ module.exports = async (req, res) => {
     });
     logResponse(res);
   } catch (err) {
-    log.error(err, 'Error in /api/widget');
+    log.error('Error in /api/widget %o', err);
     res.status(500).json({ error: 'Internal server error' });
     logResponse(res);
   }
