@@ -101,7 +101,8 @@ module.exports = async (req, res) => {
 
       if (i === 0) {
         // Today is always pending
-        week.push({ day: dayLetter, status: 'pending' });
+        const todayStatus = todaySteps != null && todaySteps >= STEP_GOAL ? 'goal_met' : 'pending'
+        week.push({ day: dayLetter, status: todayStatus });
       } else {
         const annotation = streak.day_annotations.find((a) => a.date === dateStr);
         week.push({ day: dayLetter, status: annotation ? annotation.status : 'not_met' });
