@@ -51,6 +51,16 @@ Three-tier step-tracking app with a streak freeze mechanic.
 
 **Deployment:** Vercel Functions; production DB is Neon serverless Postgres.
 
+## GitHub Actions (Claude GitHub App)
+
+The CI environment supports Node.js testing and runs the database via Docker Compose. When invoked via `@claude` in a PR or issue, the following are available:
+
+- `npm test` — runs the full test suite
+- `vercel dev` — runs the app locally (requires `VERCEL_TOKEN` secret)
+- Postgres + Neon proxy via `docker compose up`
+
+**The Garmin widget cannot be built or tested in this environment.** The MonkeyC/Connect IQ SDK toolchain is not available in CI. Garmin widget changes must be verified locally.
+
 ## Garmin Widget
 
 Located in `garmin-widget/`, written in MonkeyC (Garmin Connect IQ SDK). Built with `monkey.jungle` config using the Garmin Connect IQ SDK toolchain — no npm involvement.
