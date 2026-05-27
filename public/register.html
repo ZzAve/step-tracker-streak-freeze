@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registreren – Stappen Streak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    .auth-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+    .auth-logo { font-size: 4rem; margin-bottom: 1rem; }
+    .auth-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .auth-subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1rem; }
+    .auth-form {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: var(--accent); }
+    .auth-input::placeholder { color: var(--text-muted); }
+    .auth-error {
+      color: var(--red);
+      font-size: 0.875rem;
+      min-height: 1.25rem;
+      text-align: left;
+    }
+    .btn-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.85rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-submit:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .auth-links { font-size: 0.875rem; color: var(--text-muted); }
+    .auth-links a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="auth-screen">
+    <div class="auth-logo">🔥</div>
+    <h1 class="auth-title">Registreren</h1>
+    <p class="auth-subtitle">Maak een account aan om je stappen streaks bij te houden.</p>
+    <form class="auth-form" id="register-form">
+      <input type="email" class="auth-input" id="reg-email" placeholder="E-mailadres" required autocomplete="email">
+      <input type="password" class="auth-input" id="reg-password" placeholder="Wachtwoord (min. 8 tekens)" required autocomplete="new-password" minlength="8">
+      <input type="password" class="auth-input" id="reg-confirm" placeholder="Wachtwoord bevestigen" required autocomplete="new-password" minlength="8">
+      <div class="auth-error" id="reg-error"></div>
+      <button type="submit" class="btn-submit" id="reg-btn">Registreren</button>
+    </form>
+    <div class="auth-links">
+      Al een account? <a href="/">Inloggen</a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const confirm = document.getElementById('reg-confirm').value;
+        const errorEl = document.getElementById('reg-error');
+        const btn = document.getElementById('reg-btn');
+
+        errorEl.textContent = '';
+
+        if (password !== confirm) {
+          errorEl.textContent = 'Wachtwoorden komen niet overeen';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Bezig…';
+
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (res.ok) {
+            window.location.href = '/';
+            return;
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (data.error === 'Email already registered') {
+            errorEl.textContent = 'Dit e-mailadres is al geregistreerd';
+          } else {
+            errorEl.textContent = data.error || 'Registratie mislukt';
+          }
+        } catch (err) {
+          errorEl.textContent = 'Netwerkfout, probeer opnieuw';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Registreren';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

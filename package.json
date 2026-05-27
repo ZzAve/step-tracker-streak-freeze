@@ -4,10 +4,11 @@
   "description": "Vercel webapp to track Garmin steps with a streak freeze mechanic",
   "private": true,
   "scripts": {
-    "test": "node --test lib/streak.test.js"
+    "test": "node --test lib/streak.test.js lib/steps.test.js api/steps.test.js api/widget.test.js api/auth/register.test.js api/auth/login.test.js api/auth/migrate.test.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
+    "bcryptjs": "^2.4.3",
     "garmin-connect": "^1.6.2",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.20.0",
