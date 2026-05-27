@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Changes / intent is tracked with openspec. No changes may occur without a spec for it.
+Changes and intent are tracked with openspec. No changes may occur without a spec for it.
 
 ## Commands
 
@@ -50,3 +50,23 @@ Three-tier step-tracking app with a streak freeze mechanic.
 - Migrations in `migrations/` run automatically on cold start via `node-pg-migrate`
 
 **Deployment:** Vercel Functions; production DB is Neon serverless Postgres.
+
+## Garmin Widget
+
+Located in `garmin-widget/`, written in MonkeyC (Garmin Connect IQ SDK). Built with `monkey.jungle` config using the Garmin Connect IQ SDK toolchain — no npm involvement.
+
+**Supported devices** (manifest.xml): Fenix 7, FR265/965, Venu 2/3, Vivoactive 4/5.
+
+**Configuration:** User sets `apiKey` and `apiUrl` via the Connect IQ companion app settings (not hardcoded). Without these, the widget shows a "Stel API key in" prompt.
+
+**API:** Calls `GET {apiUrl}/api/widget?key={apiKey}` — a dedicated endpoint returning streak, freezes, weekly status, today's steps, and a server-driven `refreshAfter` timestamp.
+
+**Caching strategy** (`StreakView.mc`):
+- Data persisted to device `Storage` between sessions
+- Minimum refresh interval: 7 minutes (hard floor)
+- Staleness driven by server's `refreshAfter` field; falls back to 30-minute TTL if absent
+- Live today's steps read from `ActivityMonitor` directly (real-time arc progress without an API call)
+
+**Two screens** (tap to toggle via `StreakDelegate`):
+1. Main: circular arc for today's step progress, hero streak number, freeze snowflake icons, 7-day weekly status row
+2. Detail: next milestone countdown + longest streak record
