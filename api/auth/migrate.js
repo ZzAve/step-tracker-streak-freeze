@@ -38,7 +38,8 @@ module.exports = async (req, res) => {
       SELECT id, password_hash FROM users WHERE email = ${garminEmail.toLowerCase()}
     `;
     if (userResult.length === 0) {
-      res.status(404).json({ error: 'No account found for this email' });
+      // Return same error as invalid Garmin credentials to prevent user enumeration
+      res.status(401).json({ error: 'Invalid Garmin credentials' });
       return;
     }
 
