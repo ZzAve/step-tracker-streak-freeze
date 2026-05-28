@@ -2,6 +2,16 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
+
+const libDir = path.resolve(__dirname, '..', 'lib');
+require.cache[require.resolve('../lib/db')] = {
+  id: require.resolve('../lib/db'),
+  filename: path.join(libDir, 'db.js'),
+  loaded: true,
+  exports: { sql: () => Promise.resolve([]), initializeDatabase: () => Promise.resolve() },
+};
+
 const { computeCacheMeta } = require('./widget');
 
 const SYNC_COOLDOWN_MS = 3600000; // 1 hour

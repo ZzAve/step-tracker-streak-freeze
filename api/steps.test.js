@@ -72,7 +72,7 @@ require.cache[require.resolve('../lib/request-logger')] = {
   loaded: true,
   exports: {
     createRequestLogger: () => ({
-      log: { debug: () => {}, error: () => {} },
+      log: { debug: () => {}, warn: () => {}, error: () => {} },
       logResponse: () => {},
     }),
   },
