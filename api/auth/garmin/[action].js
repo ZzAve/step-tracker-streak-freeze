@@ -4,6 +4,7 @@ const GarminConnect = require('garmin-connect').GarminConnect;
 const { sql, initializeDatabase } = require('../../../lib/db');
 const { getUserFromSession } = require('../../../lib/session');
 const { createRequestLogger } = require('../../../lib/request-logger');
+const { encryptTokens } = require('../../../lib/token-crypto');
 
 /**
  * GET /api/auth/garmin/status — Garmin link status
@@ -59,7 +60,7 @@ async function handleLink(req, res, userId) {
 
   await sql`
     UPDATE users
-    SET garmin_user_id = ${garminEmail.toLowerCase()}, garmin_tokens = ${JSON.stringify(tokens)}
+    SET garmin_user_id = ${garminEmail.toLowerCase()}, garmin_tokens = ${encryptTokens(tokens)}
     WHERE id = ${userId}
   `;
   res.status(200).json({ ok: true });

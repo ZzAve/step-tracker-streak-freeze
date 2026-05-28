@@ -63,6 +63,13 @@ require.cache[require.resolve('garmin-connect')] = {
   exports: { GarminConnect: function () { return mockGarminClient; } },
 };
 
+require.cache[require.resolve('../../lib/token-crypto')] = {
+  id: require.resolve('../../lib/token-crypto'),
+  filename: path.join(libDir, 'token-crypto.js'),
+  loaded: true,
+  exports: { encryptTokens: () => 'enc:v1:mocked', decryptTokens: (s) => (s ? {} : null) },
+};
+
 const handler = require('./migrate');
 
 function makeReq(body = {}) {
