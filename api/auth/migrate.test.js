@@ -106,11 +106,12 @@ test('returns 400 when new password too short', async () => {
   assert.equal(res._status, 400);
 });
 
-test('returns 404 when no account found', async () => {
+test('returns 401 when no account found (prevents user enumeration)', async () => {
   sqlResults = [Promise.resolve([])];
   const res = makeRes();
   await handler(makeReq({ garminEmail: 'notfound@test.com', garminPassword: 'gpass', newPassword: 'longenough' }), res);
-  assert.equal(res._status, 404);
+  assert.equal(res._status, 401);
+  assert.deepEqual(res._json, { error: 'Invalid Garmin credentials' });
 });
 
 test('returns 409 when account already has a password', async () => {
