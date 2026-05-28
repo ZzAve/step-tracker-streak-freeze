@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
 
         // --- Load user record ---
         const userResult = await sql`
-            SELECT id, garmin_user_id, garmin_tokens, last_synced_at
+            SELECT id, email, garmin_user_id, garmin_tokens, last_synced_at
             FROM users
             WHERE id = ${userId}
         `;
@@ -49,19 +49,15 @@ module.exports = async (req, res) => {
         }
         const user = userResult[0];
 
-        // --- Sync if needed ---
+        // --- Sync if needed (skip gracefully when Garmin not linked) ---
         try {
-            await syncIfNeeded(user, {fatalOnMissingTokens: true, fatalOnSyncError: true});
+            await syncIfNeeded(user, {fatalOnMissingTokens: false, fatalOnSyncError: false});
         } catch (err) {
-            if (err.code === 'NO_TOKENS') {
-                res.status(400).json({error: 'No Garmin tokens found for user'});
-                return;
-            }
             if (err.message && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
-                res.status(401).json({error: 'Garmin token expired, please log in again'});
-                return;
+                log.warn('Garmin token expired for user %s, skipping sync', user.id);
+            } else {
+                throw err;
             }
-            throw err;
         }
 
         // --- Fetch steps & calculate streak ---
@@ -70,7 +66,8 @@ module.exports = async (req, res) => {
         // --- Build response ---
         const lastSyncedAt = user.last_synced_at ?? null;
         res.status(200).json({
-            user_email: user.garmin_user_id || null,
+            user_email: user.email || null,
+            garmin_linked: !!user.garmin_user_id,
             streak: {
                 current: streakResult.current_streak,
                 longest: streakResult.longest_streak,

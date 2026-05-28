@@ -1,9 +1,12 @@
 'use strict';
 
-const GarminConnect = require('garmin-connect').GarminConnect;
+const bcrypt = require('bcryptjs');
 const { sql, initializeDatabase } = require('../../lib/db');
 const { createSessionCookie } = require('../../lib/session');
 const { createRequestLogger } = require('../../lib/request-logger');
+
+// Dummy hash used to maintain constant-time behavior when user doesn't exist
+const DUMMY_HASH = '$2a$12$iHqMdPAE.xdwDMlQe5NCMO7vjh6RFrFSEm2/S08M7iMb5oMBsUdei';
 
 module.exports = async (req, res) => {
   const { log, logResponse } = createRequestLogger(req);
@@ -22,31 +25,40 @@ module.exports = async (req, res) => {
 
     await initializeDatabase();
 
-    const client = new GarminConnect({ username: email, password });
-    await client.login(email, password);
-
-    const tokens = client.exportToken();
-    const garminUserId = email;
-
     const userResult = await sql`
-      INSERT INTO users (garmin_user_id, garmin_tokens)
-      VALUES (${garminUserId}, ${JSON.stringify(tokens)})
-      ON CONFLICT (garmin_user_id)
-      DO UPDATE SET garmin_tokens = ${JSON.stringify(tokens)}
-      RETURNING id
+      SELECT id, password_hash FROM users WHERE email = ${email.toLowerCase()}
     `;
-    const userId = userResult[0].id;
 
-    res.setHeader('Set-Cookie', createSessionCookie(userId));
+    if (userResult.length === 0) {
+      // Constant-time dummy compare to prevent user enumeration via timing
+      await bcrypt.compare(password, DUMMY_HASH);
+      res.status(401).json({ error: 'Invalid credentials' });
+      logResponse(res);
+      return;
+    }
+
+    const user = userResult[0];
+
+    if (!user.password_hash) {
+      // Existing Garmin-only account: guide user through migration
+      res.status(401).json({ error: 'no_password' });
+      logResponse(res);
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      logResponse(res);
+      return;
+    }
+
+    res.setHeader('Set-Cookie', createSessionCookie(user.id));
     res.status(200).json({ ok: true });
     logResponse(res);
   } catch (err) {
     log.error(err, 'Login error');
-    if (err.message && (err.message.includes('401') || err.message.includes('credentials'))) {
-      res.status(401).json({ error: 'Invalid Garmin credentials' });
-    } else {
-      res.status(500).json({ error: 'Login failed' });
-    }
+    res.status(500).json({ error: 'Login failed' });
     logResponse(res);
   }
 };

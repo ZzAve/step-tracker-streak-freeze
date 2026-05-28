@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instellingen – Stappen Streak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    .page-content {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1rem 1rem 4rem;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      flex-shrink: 0;
+    }
+    .status-dot.linked { background: var(--green); }
+    .status-text { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .link-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .form-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: 'Nunito', system-ui, sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-error {
+      color: var(--red);
+      font-size: 0.875rem;
+      min-height: 1.25rem;
+    }
+    .form-success {
+      color: var(--green);
+      font-size: 0.875rem;
+      min-height: 1.25rem;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Nunito', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-danger:hover { background: var(--red-bg); }
+    .hidden { display: none; }
+    .spinner-inline {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+    <header>
+      <span class="app-title">🔥 Stappen Streak</span>
+      <div class="header-right">
+        <a href="/" class="btn-logout">← Dashboard</a>
+      </div>
+    </header>
+    <div id="loading-state" class="card" style="text-align:center; padding: 2rem;">
+      Laden…
+    </div>
+
+    <div id="settings-content" class="hidden">
+
+      <!-- Garmin account -->
+      <div class="card">
+        <div class="section-title">Garmin-account</div>
+
+        <!-- Linked state -->
+        <div id="garmin-linked-view" class="hidden">
+          <div class="status-row">
+            <div class="status-dot linked"></div>
+            <strong>Gekoppeld</strong>
+          </div>
+          <p class="status-text" id="garmin-account-text"></p>
+          <p class="status-text" id="garmin-sync-text"></p>
+          <button class="btn-danger" id="btn-unlink">Garmin loskoppelen</button>
+          <div class="form-error" id="unlink-error" style="margin-top: 0.5rem;"></div>
+        </div>
+
+        <!-- Unlinked state -->
+        <div id="garmin-unlinked-view" class="hidden">
+          <div class="status-row">
+            <div class="status-dot"></div>
+            <strong>Niet gekoppeld</strong>
+          </div>
+          <p class="status-text">Koppel je Garmin-account om stappen te synchroniseren.</p>
+          <form class="link-form" id="link-form">
+            <input type="email" class="form-input" id="link-email" placeholder="Garmin e-mailadres" required autocomplete="email">
+            <input type="password" class="form-input" id="link-password" placeholder="Garmin wachtwoord" required autocomplete="current-password">
+            <div class="form-error" id="link-error"></div>
+            <button type="submit" class="btn-primary" id="btn-link">Garmin koppelen</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const MONTH_NAMES = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+      function show(id) { document.getElementById(id).classList.remove('hidden'); }
+      function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+      function fmtDate(iso) {
+        const d = new Date(iso);
+        return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+
+      async function loadStatus() {
+        try {
+          const res = await fetch('/api/auth/garmin/status');
+          if (res.status === 401) {
+            window.location.href = '/';
+            return;
+          }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          const data = await res.json();
+          hide('loading-state');
+          show('settings-content');
+
+          if (data.linked) {
+            document.getElementById('garmin-account-text').textContent = `Account: ${data.garminUserId}`;
+            document.getElementById('garmin-sync-text').textContent = data.lastSyncedAt
+              ? `Laatste sync: ${fmtDate(data.lastSyncedAt)}`
+              : 'Nog niet gesynchroniseerd';
+            show('garmin-linked-view');
+          } else {
+            show('garmin-unlinked-view');
+          }
+        } catch (err) {
+          document.getElementById('loading-state').textContent = 'Fout bij laden: ' + err.message;
+        }
+      }
+
+      // Link form
+      document.getElementById('link-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const garminEmail = document.getElementById('link-email').value;
+        const garminPassword = document.getElementById('link-password').value;
+        const errorEl = document.getElementById('link-error');
+        const btn = document.getElementById('btn-link');
+
+        errorEl.textContent = '';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-inline"></span>Koppelen…';
+
+        try {
+          const res = await fetch('/api/auth/garmin/link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ garminEmail, garminPassword }),
+          });
+
+          if (res.ok) {
+            window.location.reload();
+            return;
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (data.error === 'Invalid Garmin credentials') {
+            errorEl.textContent = 'Onjuiste Garmin-gegevens';
+          } else if (data.error && data.error.includes('already linked')) {
+            errorEl.textContent = 'Dit Garmin-account is al gekoppeld aan een ander account';
+          } else {
+            errorEl.textContent = data.error || 'Koppelen mislukt';
+          }
+        } catch (err) {
+          errorEl.textContent = 'Netwerkfout, probeer opnieuw';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Garmin koppelen';
+        }
+      });
+
+      // Unlink button
+      document.getElementById('btn-unlink').addEventListener('click', async () => {
+        if (!confirm('Weet je zeker dat je je Garmin-account wilt loskoppelen? Je stappen worden niet meer gesynchroniseerd.')) return;
+
+        const errorEl = document.getElementById('unlink-error');
+        const btn = document.getElementById('btn-unlink');
+
+        errorEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Bezig…';
+
+        try {
+          const res = await fetch('/api/auth/garmin/unlink', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (res.ok) {
+            window.location.reload();
+            return;
+          }
+
+          const data = await res.json().catch(() => ({}));
+          errorEl.textContent = data.error || 'Loskoppelen mislukt';
+        } catch (err) {
+          errorEl.textContent = 'Netwerkfout, probeer opnieuw';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Garmin loskoppelen';
+        }
+      });
+
+      loadStatus();
+    })();
+  </script>
+</body>
+</html>

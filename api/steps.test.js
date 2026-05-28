@@ -72,7 +72,7 @@ require.cache[require.resolve('../lib/request-logger')] = {
   loaded: true,
   exports: {
     createRequestLogger: () => ({
-      log: { debug: () => {}, error: () => {} },
+      log: { debug: () => {}, warn: () => {}, error: () => {} },
       logResponse: () => {},
     }),
   },
@@ -102,7 +102,7 @@ function makeRes() {
   return res;
 }
 
-const DEFAULT_USER = { id: 'user-1', garmin_user_id: 'garmin@test.com', garmin_tokens: '{}', last_synced_at: '2026-03-25T10:00:00Z' };
+const DEFAULT_USER = { id: 'user-1', email: 'user@test.com', garmin_user_id: 'garmin@test.com', garmin_tokens: '{}', last_synced_at: '2026-03-25T10:00:00Z' };
 const DEFAULT_STREAK = {
   current_streak: 0, longest_streak: 0, freeze_count: 0,
   days_since_last_freeze_earned: 0, freezes_used: [], day_annotations: [],
@@ -143,26 +143,26 @@ test('returns 401 when user not found in DB', async () => {
   assert.deepEqual(res._json, { error: 'User not found' });
 });
 
-test('returns 400 when sync fails with NO_TOKENS', async () => {
+test('returns 200 with empty steps when Garmin not linked (no tokens)', async () => {
   mockGetUserFromSession = () => 'user-1';
-  mockSqlResult = Promise.resolve([DEFAULT_USER]);
-  const err = new Error('No tokens');
-  err.code = 'NO_TOKENS';
-  mockSyncIfNeeded = () => Promise.reject(err);
+  const userNoGarmin = { ...DEFAULT_USER, garmin_user_id: null, garmin_tokens: null };
+  mockSqlResult = Promise.resolve([userNoGarmin]);
+  mockSyncIfNeeded = () => Promise.resolve(false);
+  mockFetchStepsAndStreak = () => Promise.resolve({ allSteps: [], streak: DEFAULT_STREAK });
   const res = makeRes();
   await handler(makeReq(), res);
-  assert.equal(res._status, 400);
-  assert.deepEqual(res._json, { error: 'No Garmin tokens found for user' });
+  assert.equal(res._status, 200);
+  assert.equal(res._json.garmin_linked, false);
 });
 
-test('returns 401 when sync fails with Garmin 401', async () => {
+test('returns 200 when Garmin sync fails (non-fatal)', async () => {
   mockGetUserFromSession = () => 'user-1';
   mockSqlResult = Promise.resolve([DEFAULT_USER]);
   mockSyncIfNeeded = () => Promise.reject(new Error('Garmin API returned 401 Unauthorized'));
+  mockFetchStepsAndStreak = () => Promise.resolve({ allSteps: [], streak: DEFAULT_STREAK });
   const res = makeRes();
   await handler(makeReq(), res);
-  assert.equal(res._status, 401);
-  assert.deepEqual(res._json, { error: 'Garmin token expired, please log in again' });
+  assert.equal(res._status, 200);
 });
 
 test('returns 200 with correct response shape on success', async () => {
@@ -186,7 +186,8 @@ test('returns 200 with correct response shape on success', async () => {
   await handler(makeReq(), res);
 
   assert.equal(res._status, 200);
-  assert.equal(res._json.user_email, 'garmin@test.com');
+  assert.equal(res._json.user_email, 'user@test.com');
+  assert.equal(res._json.garmin_linked, true);
   assert.equal(res._json.streak.current, 5);
   assert.equal(res._json.streak.longest, 10);
   assert.equal(res._json.streak.freeze_count, 1);
