@@ -40,6 +40,7 @@
 ## 8. Settings Page
 
 - [x] 8.1 Create `public/settings.html` — shows Garmin link status, link/unlink buttons, last sync time; links back to dashboard
+- [x] 8.2 Fix `public/settings.html` header alignment — move header inside `.page-content` container and use `← Dashboard` to match `/keys` page layout
 
 ## 9. Tests
 
