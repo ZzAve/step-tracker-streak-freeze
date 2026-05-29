@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { sql, initializeDatabase } = require('../../lib/db');
 const { createRequestLogger } = require('../../lib/request-logger');
+const { validatePassword } = require('../../lib/password');
 
 module.exports = async (req, res) => {
   const { log, logResponse } = createRequestLogger(req);
@@ -19,8 +20,9 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'Token and password are required' });
       return;
     }
-    if (password.length < 8) {
-      res.status(400).json({ error: 'Password must be at least 8 characters' });
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      res.status(400).json({ error: pwCheck.error });
       return;
     }
 
