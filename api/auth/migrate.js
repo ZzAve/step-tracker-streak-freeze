@@ -5,6 +5,7 @@ const GarminConnect = require('garmin-connect').GarminConnect;
 const { sql, initializeDatabase } = require('../../lib/db');
 const { createSessionCookie } = require('../../lib/session');
 const { createRequestLogger } = require('../../lib/request-logger');
+const { encryptTokens } = require('../../lib/token-crypto');
 
 /**
  * POST /api/auth/migrate
@@ -59,7 +60,7 @@ module.exports = async (req, res) => {
       UPDATE users
       SET password_hash = ${passwordHash},
           garmin_user_id = ${garminEmail.toLowerCase()},
-          garmin_tokens = ${JSON.stringify(tokens)}
+          garmin_tokens = ${encryptTokens(tokens)}
       WHERE id = ${user.id}
     `;
 
