@@ -1,5 +1,5 @@
 const { defineConfig, devices } = require('@playwright/test');
-const { DATABASE_URL, SESSION_SECRET } = require('./e2e/test-env');
+const { DATABASE_URL, SESSION_SECRET } = require('./e2e/env');
 
 // Dedicated, uncommon port so the harness never collides with (or reuses) an
 // unrelated dev server. Override with E2E_PORT if needed.

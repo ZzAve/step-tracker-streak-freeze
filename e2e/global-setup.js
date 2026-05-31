@@ -1,5 +1,5 @@
 const { Client } = require('pg');
-const { DATABASE_URL, SESSION_SECRET } = require('./test-env');
+const { DATABASE_URL, SESSION_SECRET } = require('./env');
 
 // Runs once before the suite: fail fast if the local database is missing, then
 // apply production migrations so the schema under test matches production.

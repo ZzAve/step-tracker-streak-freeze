@@ -40,7 +40,7 @@ be ready, then runs the suite in parallel. If a dev server is already running on
 ## Configuration
 
 Test mode is **environment-driven only** — no production source is modified.
-Defaults live in [`e2e/test-env.js`](./test-env.js) and target the local stack;
+Defaults live in [`e2e/env.js`](./env.js) and target the local stack;
 override via environment variables:
 
 | Variable         | Default                                                   | Purpose                                              |
