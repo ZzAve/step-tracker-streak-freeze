@@ -2,6 +2,21 @@
 
 Changes and intent are tracked with openspec. No changes may occur without a spec for it.
 
+The openspec CLI is a pinned devDependency (`@fission-ai/openspec`). After `npm install`
+it lives at `./node_modules/.bin/openspec` — invoke it by that path. The `/openspec-*` and
+`/opsx:*` slash-command skills emit bare `openspec ...`; run those as
+`./node_modules/.bin/openspec ...`. Never `npm i -g openspec` or `npx openspec` against the
+bare `openspec` package — it's an unrelated npm stub. (The skills are CLI-generated and may be
+overwritten by `openspec update`, so this path reminder lives here in CLAUDE.md, not in them.)
+Use the CLI to scaffold and manage changes rather than hand-editing the `openspec/` tree:
+
+```bash
+./node_modules/.bin/openspec list                # list active changes
+./node_modules/.bin/openspec new change "<name>" # scaffold a new change
+./node_modules/.bin/openspec validate "<name>"   # validate a change's artifacts
+./node_modules/.bin/openspec archive "<name>"    # archive after merge; folds deltas into specs
+```
+
 ## Commands
 
 ```bash
