@@ -30,3 +30,7 @@ jobs:
         run: npm test
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/main
+
+      - name: Stop local database
+        if: always()
+        run: docker compose down -v
