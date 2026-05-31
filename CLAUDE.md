@@ -2,6 +2,17 @@
 
 Changes and intent are tracked with openspec. No changes may occur without a spec for it.
 
+The openspec CLI is a pinned devDependency (`@fission-ai/openspec`), so run it via
+`npx openspec` after `npm install` — never the bare `openspec` package (an unrelated stub).
+Use it to scaffold and manage changes rather than hand-editing the `openspec/` tree:
+
+```bash
+npx openspec list                  # list active changes
+npx openspec new change "<name>"   # scaffold a new change
+npx openspec validate "<name>"     # validate a change's artifacts
+npx openspec archive "<name>"      # archive after the change merges; folds deltas into specs
+```
+
 ## Commands
 
 ```bash
