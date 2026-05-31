@@ -46,7 +46,7 @@ Three-tier step-tracking app with a streak freeze mechanic.
 - `garmin-widget/` — MonkeyC app for Garmin Connect IQ devices
 
 **Data flow:**
-1. User authenticates via Garmin OAuth (`api/auth/login.js`)
+1. User authenticates with email + password (`api/auth/register.js`, `api/auth/login.js`); sessions are a signed `session` cookie (`lib/session.js`). Garmin is optionally linked afterward (`api/auth/garmin/*`) to enable step sync.
 2. Step data syncs from Garmin API on request, with a 1-hour cooldown (`lib/sync.js`)
 3. Streak state is calculated idempotently from `daily_steps` records (`lib/streak.js`)
 4. Frontend or Garmin widget fetches via `GET /api/steps` or `GET /api/widget`
@@ -58,7 +58,7 @@ Three-tier step-tracking app with a streak freeze mechanic.
 - Streak is recalculated from scratch on each fetch (no stored state machine)
 
 **Database** (Postgres via Neon in prod, Docker locally):
-- `users` — Garmin tokens, sync timestamps
+- `users` — Email + password hash, optional Garmin tokens, sync timestamps
 - `daily_steps` — Per-day step counts and goal status
 - `streaks` — Calculated streak records
 - `api_keys` — External API access tokens
