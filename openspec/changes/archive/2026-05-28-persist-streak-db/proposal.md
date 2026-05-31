@@ -26,7 +26,7 @@ The `streaks` table already exists (`migrations/003_create-streaks.sql`) and `li
 
 ## Impact
 
-- **Schema**: `migrations/008_add-streak-persistence.sql` adds `freezes_used JSONB` and `last_processed_date DATE` to the `streaks` table
+- **Schema**: `migrations/011_add-streak-persistence.sql` adds `freezes_used JSONB` and `last_processed_date DATE` to the `streaks` table
 - **Code**: `lib/streak.js` (new `applyIncrementalDays`), `lib/steps.js` (new `upsertStreakResult`, updated `fetchStepsAndStreak`), `lib/sync.js` (awaited write, incremental logic)
 - **APIs**: No changes to `/api/steps` or `/api/widget` response shapes
 - **Tests**: New tests for `applyIncrementalDays` (pure function, all scenarios); new `lib/sync.test.js` for sync-persistence behaviour

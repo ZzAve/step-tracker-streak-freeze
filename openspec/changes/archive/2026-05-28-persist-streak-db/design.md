@@ -41,7 +41,7 @@ status = goal_met ? 'hit' : (date IN freezes_used) ? 'freeze' : 'not_met'
 
 A pure function that advances a persisted streak state forward:
 
-```
+```text
 input:  persistedState = { current_streak, longest_streak, freeze_count,
                            days_since_last_freeze_earned, freezes_used,
                            last_processed_date }

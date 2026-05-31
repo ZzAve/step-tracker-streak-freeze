@@ -7,7 +7,7 @@
 
 ## Phase 1 — Read from DB, write on sync (full recalc)
 
-- [x] 1.1 Write migration `008_add-streak-persistence.sql` adding `freezes_used JSONB` and `last_processed_date DATE` to `streaks`
+- [x] 1.1 Write migration `011_add-streak-persistence.sql` adding `freezes_used JSONB` and `last_processed_date DATE` to `streaks`
 - [x] 1.2 Export `DAYS_PER_FREEZE` and `MAX_FREEZES` from `lib/streak.js`
 - [x] 1.3 Add `upsertStreakResult(userId, streakResult, lastProcessedDate)` to `lib/steps.js`
 - [x] 1.4 Update `fetchStepsAndStreak` to read from `streaks`; reconstruct `day_annotations` from `allSteps + freezes_used`; fall back to `calculateStreak` when no row exists
