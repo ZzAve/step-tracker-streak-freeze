@@ -16,9 +16,13 @@
     "ws": "^8.19.0"
   },
   "engines": {
-    "node": "24.x"
+    "node": ">=20"
   },
   "devDependencies": {
     "vercel": "^50.32.5"
+  },
+  "overrides": {
+    "tar": "^7.5.15",
+    "glob": "^13.0.0"
   }
 }
