@@ -27,3 +27,9 @@ garmin-widget/source/mir/
 # Worktrees
 .worktrees/
 /garmin-widget/build
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
