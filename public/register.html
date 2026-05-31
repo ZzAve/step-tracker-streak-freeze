@@ -73,8 +73,8 @@
     <p class="auth-subtitle">Maak een account aan om je stappen streaks bij te houden.</p>
     <form class="auth-form" id="register-form">
       <input type="email" class="auth-input" id="reg-email" placeholder="E-mailadres" required autocomplete="email">
-      <input type="password" class="auth-input" id="reg-password" placeholder="Wachtwoord (min. 8 tekens)" required autocomplete="new-password" minlength="8">
-      <input type="password" class="auth-input" id="reg-confirm" placeholder="Wachtwoord bevestigen" required autocomplete="new-password" minlength="8">
+      <input type="password" class="auth-input" id="reg-password" placeholder="Wachtwoord (min. 16 tekens, A-Z, a-z, 0-9, !@#)" required autocomplete="new-password" minlength="16">
+      <input type="password" class="auth-input" id="reg-confirm" placeholder="Wachtwoord bevestigen" required autocomplete="new-password" minlength="16">
       <div class="auth-error" id="reg-error"></div>
       <button type="submit" class="btn-submit" id="reg-btn">Registreren</button>
     </form>
@@ -83,6 +83,7 @@
     </div>
   </div>
 
+  <script src="/password-validation.js"></script>
   <script>
     (function () {
       'use strict';
@@ -96,6 +97,12 @@
         const btn = document.getElementById('reg-btn');
 
         errorEl.textContent = '';
+
+        const pwError = validatePassword(password);
+        if (pwError) {
+          errorEl.textContent = pwError;
+          return;
+        }
 
         if (password !== confirm) {
           errorEl.textContent = 'Wachtwoorden komen niet overeen';
