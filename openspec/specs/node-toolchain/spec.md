@@ -1,7 +1,8 @@
 # node-toolchain Specification
 
 ## Purpose
-TBD - created by archiving change pin-node-version. Update Purpose after archive.
+Define a single, fixed Node.js version as the source of truth so local development, CI, and the Vercel runtime all run on the same version, keeping builds reproducible.
+
 ## Requirements
 ### Requirement: Single pinned Node.js version
 The system SHALL declare one fixed Node.js version in `.nvmrc` as the single source of truth for local development, CI, and the production runtime.
