@@ -30,7 +30,8 @@ module.exports = async (req, res) => {
 
     const existing = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`;
     if (existing.length > 0) {
-      res.status(409).json({ error: 'Email already registered' });
+      // Always 200 to prevent user enumeration
+      res.status(200).json({ ok: true });
       return;
     }
 

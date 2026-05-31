@@ -125,11 +125,7 @@
           }
 
           const data = await res.json().catch(() => ({}));
-          if (data.error === 'Email already registered') {
-            errorEl.textContent = 'Dit e-mailadres is al geregistreerd';
-          } else {
-            errorEl.textContent = data.error || 'Registratie mislukt';
-          }
+          errorEl.textContent = data.error || 'Registratie mislukt';
         } catch (err) {
           errorEl.textContent = 'Netwerkfout, probeer opnieuw';
         } finally {

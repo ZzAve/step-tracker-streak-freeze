@@ -1,5 +1,7 @@
-## ADDED Requirements
+## Purpose
 
+Manage database schema changes as versioned, tracked migrations that run automatically and idempotently on application startup, so the schema evolves reliably across environments without manual intervention.
+## Requirements
 ### Requirement: Versioned migration files
 The system SHALL manage database schema changes through individually versioned SQL migration files stored in a `migrations/` directory.
 
@@ -34,4 +36,20 @@ The system SHALL run pending migrations automatically during application startup
 #### Scenario: Startup with pending migrations
 - **WHEN** the application starts and there are unapplied migrations
 - **THEN** all pending migrations SHALL be applied in order before the application accepts requests
+
+### Requirement: Environment-scoped migration target
+The system SHALL run automatic startup migrations against a database that is scoped to the deployment environment, so that migrations triggered by a non-production (preview) deployment do not modify the production database.
+
+#### Scenario: Preview deployment migrates its own database
+- **WHEN** a preview deployment cold-starts and runs pending migrations via `initializeDatabase()`
+- **THEN** the migrations SHALL execute against the Preview-scoped `DATABASE_URL` (a dedicated preview database branch)
+- **AND** the production database SHALL be unaffected
+
+#### Scenario: Production deployment migrates the production database
+- **WHEN** a production deployment cold-starts and runs pending migrations
+- **THEN** the migrations SHALL execute against the Production-scoped `DATABASE_URL` (the production database branch)
+
+#### Scenario: Per-environment configuration is documented
+- **WHEN** a contributor configures deployment environments
+- **THEN** the project documentation SHALL describe that `DATABASE_URL` (and `TOKEN_ENCRYPTION_KEY`) are scoped per Vercel environment, with Preview backed by a separate shared database branch
 

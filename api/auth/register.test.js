@@ -133,12 +133,13 @@ test('returns 400 when password has no special character', async () => {
   assert.match(res._json.error, /special/i);
 });
 
-test('returns 409 when email already registered', async () => {
+test('returns 200 without session cookie when email already registered', async () => {
   sqlResults = [Promise.resolve([{ id: 1 }])];
   const res = makeRes();
   await handler(makeReq('POST', { email: 'test@example.com', password: VALID_PASSWORD }), res);
-  assert.equal(res._status, 409);
-  assert.match(res._json.error, /already registered/i);
+  assert.equal(res._status, 200);
+  assert.deepEqual(res._json, { ok: true });
+  assert.equal(res._headers['Set-Cookie'], undefined);
 });
 
 test('returns 201 and sets session cookie on success', async () => {
