@@ -12,6 +12,14 @@ function uniqueEmail() {
   return `e2e-${Date.now()}-${process.pid}-${seq}@example.com`;
 }
 
+// Unique plaintext API key per call, so seeded api_keys rows (UNIQUE key_hash)
+// never collide across parallel workers. Also reused as a guaranteed-unknown
+// key for the invalid-key path.
+function uniqueApiKey() {
+  seq += 1;
+  return `e2e-key-${Date.now()}-${process.pid}-${seq}`;
+}
+
 // Arrange a registered user via the real API (used to set up login tests).
 async function createUser(request, email, password = PASSWORD) {
   const res = await request.post('/api/auth/register', {
@@ -31,4 +39,4 @@ async function loginViaUI(page, email, password = PASSWORD) {
   await page.click('#login-btn');
 }
 
-module.exports = { PASSWORD, uniqueEmail, createUser, loginViaUI };
+module.exports = { PASSWORD, uniqueEmail, uniqueApiKey, createUser, loginViaUI };

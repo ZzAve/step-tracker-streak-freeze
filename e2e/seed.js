@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { Client } = require('pg');
 const { DATABASE_URL } = require('./env');
 
@@ -65,10 +66,45 @@ async function seedDailySteps(email, rows) {
   }
 }
 
+// Provision an API key for a registered user directly in the DB, given a
+// plaintext the test already knows. Mirrors api/apikey.js: sha256(plaintext) ->
+// key_hash, first 8 chars -> prefix. There is no test-only minting endpoint
+// path needed here — the widget only ever sees the hash. `daysToExpiry`
+// negative yields an already-expired key for the 401 path. Each test mints its
+// own unique plaintext, so the UNIQUE(key_hash) rows never collide in parallel.
+async function seedApiKey(email, plaintextKey, { daysToExpiry = 365 } = {}) {
+  const client = new Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+
+    const userRes = await client.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (userRes.rows.length === 0) {
+      throw new Error(`[e2e seed] no user found for email ${email} — register before seeding`);
+    }
+    const userId = userRes.rows[0].id;
+
+    const keyHash = crypto.createHash('sha256').update(plaintextKey).digest('hex');
+    const prefix = plaintextKey.slice(0, 8);
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + daysToExpiry);
+
+    await client.query(
+      `INSERT INTO api_keys (user_id, name, key_hash, prefix, created_at, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, 'e2e', keyHash, prefix, now.toISOString(), expiresAt.toISOString()]
+    );
+    return userId;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 module.exports = {
   STEP_GOAL,
   ymd,
   dateStrDaysAgo,
   consecutiveGoalMetEndingYesterday,
   seedDailySteps,
+  seedApiKey,
 };
