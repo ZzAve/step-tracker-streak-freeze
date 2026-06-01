@@ -15,6 +15,6 @@
 
 ## 3. Verification
 
-- [ ] 3.1 Run the e2e suite in parallel and confirm the new step-dashboard tests are green and deterministic across repeated runs
-- [ ] 3.2 Confirm `npm test` (unit suite) still runs independently without the database or browser binaries
-- [ ] 3.3 Run `./node_modules/.bin/openspec validate add-e2e-step-dashboard --strict` and fix any issues
+- [x] 3.1 Run the e2e suite in parallel and confirm the new step-dashboard tests are green and deterministic across repeated runs
+- [x] 3.2 Confirm `npm test` (unit suite) still runs independently without the database or browser binaries
+- [x] 3.3 Run `./node_modules/.bin/openspec validate add-e2e-step-dashboard --strict` and fix any issues
