@@ -48,14 +48,14 @@ Three-tier step-tracking app with a streak freeze mechanic.
 **Data flow:**
 1. User authenticates with email + password (`api/auth/register.js`, `api/auth/login.js`); sessions are a signed `session` cookie (`lib/session.js`). Garmin is optionally linked afterward (`api/auth/garmin/*`) to enable step sync.
 2. Step data syncs from Garmin API on request, with a 1-hour cooldown (`lib/sync.js`)
-3. Streak state is calculated idempotently from `daily_steps` records (`lib/streak.js`)
+3. Streak state is derived from `daily_steps` by `lib/streak.js`, persisted to the `streaks` table, and reused/advanced incrementally on later reads (`daily_steps` stays the source of truth)
 4. Frontend or Garmin widget fetches via `GET /api/steps` or `GET /api/widget`
 
 **Streak freeze mechanic** (`lib/streak.js`):
 - Goal: 10,000 steps/day
 - Earn 1 freeze per 35 consecutive goal days; max 2 held at once
 - Each freeze covers up to 5 consecutive missed days without breaking the streak
-- Streak is recalculated from scratch on each fetch (no stored state machine)
+- `calculateStreak()` derives the full streak idempotently from `daily_steps` (the source of truth) — used for the initial computation and as the fallback. Results are persisted to `streaks`; later reads return the persisted row and advance only newly-completed days via `applyIncrementalDays()` (forward-only), falling back to a full recalc on historical backfill. See `openspec/specs/streak-engine/spec.md`.
 
 **Database** (Postgres via Neon in prod, Docker locally):
 - `users` — Email + password hash, optional Garmin tokens, sync timestamps

@@ -30,6 +30,8 @@ jobs:
         run: npm test
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/main
+          # Dummy 32-byte key for tests only — never used in production.
+          TOKEN_ENCRYPTION_KEY: deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 
       - name: Stop local database
         if: always()
