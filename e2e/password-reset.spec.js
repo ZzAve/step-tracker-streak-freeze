@@ -14,7 +14,7 @@ const NEW_PASSWORD = 'e2e-NewPassword-5678';
 // Drive the real forgot-password form in the browser.
 async function requestResetViaUI(page, email) {
   await page.goto('/forgot-password');
-  await page.waitForLoadState('networkidle');
+  await page.locator('#fp-btn').waitFor();
   await page.fill('#fp-email', email);
   await page.click('#fp-btn');
 }
@@ -22,7 +22,7 @@ async function requestResetViaUI(page, email) {
 // Drive the real reset-password form in the browser (token from the URL query).
 async function submitResetViaUI(page, token, newPassword = NEW_PASSWORD) {
   await page.goto(`/reset-password?token=${encodeURIComponent(token)}`);
-  await page.waitForLoadState('networkidle');
+  await page.locator('#rp-btn').waitFor();
   await page.fill('#rp-password', newPassword);
   await page.fill('#rp-confirm', newPassword);
   await page.click('#rp-btn');

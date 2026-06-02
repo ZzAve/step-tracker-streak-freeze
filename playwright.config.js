@@ -17,7 +17,9 @@ module.exports = defineConfig({
   globalSetup: require.resolve('./e2e/global-setup.js'),
   use: {
     baseURL: BASE_URL,
-    trace: 'on-first-retry',
+    // Keep a trace whenever a test fails — including the first (and only) local
+    // attempt, where retries are 0 — so DB+browser failures stay debuggable.
+    trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   // Boots the real app the way `vercel dev` runs it, in test configuration via
