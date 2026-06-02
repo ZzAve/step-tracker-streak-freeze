@@ -100,6 +100,61 @@ async function seedApiKey(email, plaintextKey, { daysToExpiry = 365 } = {}) {
   }
 }
 
+// Provision a password-reset token for a registered user directly in the DB,
+// given a plaintext the test already knows. Mirrors api/auth/forgot-password.js:
+// sha256(plaintext) -> token_hash, 1h expiry. The endpoint stores only the hash
+// (the plaintext leaves only by email), so a test cannot read a real token back —
+// it seeds a known one and drives the real reset endpoint with it. A past
+// `expiresInMs` yields the expired fixture; a `usedAt` timestamp yields the
+// already-used fixture. Each test mints its own unique plaintext, so rows never
+// collide across parallel workers.
+async function seedResetToken(email, plaintextToken, { expiresInMs = 3600000, usedAt = null } = {}) {
+  const client = new Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+
+    const userRes = await client.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (userRes.rows.length === 0) {
+      throw new Error(`[e2e seed] no user found for email ${email} — register before seeding`);
+    }
+    const userId = userRes.rows[0].id;
+
+    const tokenHash = crypto.createHash('sha256').update(plaintextToken).digest('hex');
+    const expiresAt = new Date(Date.now() + expiresInMs);
+
+    await client.query(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, used_at)
+       VALUES ($1, $2, $3, $4)`,
+      [userId, tokenHash, expiresAt.toISOString(), usedAt]
+    );
+    return userId;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+// Count a user's unused reset tokens, resolved by lowercased email. Lets the
+// request-side tests assert the anti-enumeration difference that matters: a row
+// created for a registered user, none for an unregistered email (returns 0 when
+// no such user exists). Test-only; parallel-safe per the unique-user isolation.
+async function countResetTokens(email) {
+  const client = new Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+
+    const res = await client.query(
+      `SELECT COUNT(*)::int AS n
+       FROM password_reset_tokens t
+       JOIN users u ON u.id = t.user_id
+       WHERE u.email = $1 AND t.used_at IS NULL`,
+      [email.toLowerCase()]
+    );
+    return res.rows[0].n;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 module.exports = {
   STEP_GOAL,
   ymd,
@@ -107,4 +162,6 @@ module.exports = {
   consecutiveGoalMetEndingYesterday,
   seedDailySteps,
   seedApiKey,
+  seedResetToken,
+  countResetTokens,
 };

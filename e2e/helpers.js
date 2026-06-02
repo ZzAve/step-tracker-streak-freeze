@@ -20,6 +20,14 @@ function uniqueApiKey() {
   return `e2e-key-${Date.now()}-${process.pid}-${seq}`;
 }
 
+// Unique plaintext reset token per call, so seeded password_reset_tokens rows
+// never collide across parallel workers. Also reused as a guaranteed-unknown
+// token for the invalid-token path (it is never seeded).
+function uniqueToken() {
+  seq += 1;
+  return `e2e-token-${Date.now()}-${process.pid}-${seq}`;
+}
+
 // Arrange a registered user via the real API (used to set up login tests).
 async function createUser(request, email, password = PASSWORD) {
   const res = await request.post('/api/auth/register', {
@@ -39,4 +47,4 @@ async function loginViaUI(page, email, password = PASSWORD) {
   await page.click('#login-btn');
 }
 
-module.exports = { PASSWORD, uniqueEmail, uniqueApiKey, createUser, loginViaUI };
+module.exports = { PASSWORD, uniqueEmail, uniqueApiKey, uniqueToken, createUser, loginViaUI };
