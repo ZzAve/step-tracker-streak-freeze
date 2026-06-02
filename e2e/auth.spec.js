@@ -6,8 +6,9 @@ test.describe('authentication', () => {
     const email = uniqueEmail();
 
     await page.goto('/register');
-    // Wait for the inline script to attach the form handler (avoids a native submit).
-    await page.waitForLoadState('networkidle');
+    // Wait for the submit button (the inline script attaches the form handler
+    // synchronously before the page settles; this avoids a native submit).
+    await page.locator('#reg-btn').waitFor();
     await page.fill('#reg-email', email);
     await page.fill('#reg-password', PASSWORD);
     await page.fill('#reg-confirm', PASSWORD);

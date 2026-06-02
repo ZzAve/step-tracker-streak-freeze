@@ -53,8 +53,8 @@ Three-tier step-tracking app with a streak freeze mechanic.
 
 **Streak freeze mechanic** (`lib/streak.js`):
 - Goal: 10,000 steps/day
-- Earn 1 freeze per 35 consecutive goal days; max 2 held at once
-- Each freeze covers up to 5 consecutive missed days without breaking the streak
+- Earn 1 freeze per 5 consecutive goal days; max 2 held at once
+- Each freeze covers exactly 1 missed day without breaking the streak; with the max 2 held, up to 2 consecutive missed days can be covered
 - `calculateStreak()` derives the full streak idempotently from `daily_steps` (the source of truth) — used for the initial computation and as the fallback. Results are persisted to `streaks`; later reads return the persisted row and advance only newly-completed days via `applyIncrementalDays()` (forward-only), falling back to a full recalc on historical backfill. See `openspec/specs/streak-engine/spec.md`.
 
 **Database** (Postgres via Neon in prod, Docker locally):

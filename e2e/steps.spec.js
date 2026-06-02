@@ -71,6 +71,11 @@ test.describe('step dashboard', () => {
     const cells = page.locator('#days-grid .day-cell');
     await expect(cells).toHaveCount(7);
 
+    // Note: the dashboard grid does NOT special-case a below-goal "today" — it
+    // classes today's cell goal-met/goal-missed from goal_met like any past day
+    // (public/index.html renderWeek). So the i===todayIdx assertion below holds
+    // for every weekday. (The widget contract differs: below-goal today ->
+    // 'pending', see widget.spec.js.)
     const todayIdx = todayCellIndex();
     for (let i = 0; i < 7; i++) {
       const cell = cells.nth(i);

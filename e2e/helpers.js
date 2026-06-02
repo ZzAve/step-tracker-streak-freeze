@@ -39,9 +39,11 @@ async function createUser(request, email, password = PASSWORD) {
 // Drive the real login form in the browser.
 async function loginViaUI(page, email, password = PASSWORD) {
   await page.goto('/');
-  // The form's submit handler is attached by an inline script; wait for the page
-  // to settle so the click hits the JS handler rather than a native form submit.
-  await page.waitForLoadState('networkidle');
+  // The login form lives behind checkAuth() (the login screen starts hidden).
+  // Wait for the submit button to be actionable — by which point the inline
+  // script has attached the submit handler — so the click hits the JS handler
+  // rather than triggering a native form submit.
+  await page.locator('#login-btn').waitFor();
   await page.fill('#login-email', email);
   await page.fill('#login-password', password);
   await page.click('#login-btn');
