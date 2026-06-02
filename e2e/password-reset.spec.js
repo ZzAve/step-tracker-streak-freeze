@@ -3,7 +3,12 @@ const { PASSWORD, uniqueEmail, uniqueToken, createUser } = require('./helpers');
 const { seedResetToken, countResetTokens } = require('./seed');
 
 // A distinct strong password for the reset, satisfying lib/password.js /
-// password-validation.js (>=16 chars, upper, lower, digit, special '-').
+// password-validation.js (>=16 chars, upper, lower, digit, special '-'). It MUST
+// stay policy-valid: the rejection tests below assert reset-password.html's
+// #invalid-screen, which the page shows only for the exact server error
+// 'Invalid or expired token'. A policy-invalid password would 400 first (inline
+// #rp-error), so the token-mismatch path — the thing under test — is reachable
+// only while this password passes validation.
 const NEW_PASSWORD = 'e2e-NewPassword-5678';
 
 // Drive the real forgot-password form in the browser.
