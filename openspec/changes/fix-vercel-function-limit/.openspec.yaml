@@ -1,0 +1,11 @@
+schema: spec-driven
+created: 2026-09-17
+artifacts:
+  proposal:
+    status: done
+  specs:
+    status: done
+  tasks:
+    status: done
+  apply:
+    status: done
