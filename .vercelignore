@@ -1,0 +1,8 @@
+# Every .js file under api/ becomes a Serverless Function, tests included, and
+# the Hobby plan caps a deployment at 12.
+*.test.js
+
+# Not part of the deployed app
+docs/
+garmin-widget/
+openspec/
